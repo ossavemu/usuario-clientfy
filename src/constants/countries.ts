@@ -1,7 +1,20 @@
 export const countries = [
+  { label: 'Argentina', value: '+54', code: 'AR' },
+  { label: 'Bolivia', value: '+591', code: 'BO' },
+  { label: 'Brazil', value: '+55', code: 'BR' },
+  { label: 'Chile', value: '+56', code: 'CL' },
   { label: 'Colombia', value: '+57', code: 'CO' },
-  { label: 'México', value: '+52', code: 'MX' },
-  { label: 'Brasil', value: '+55', code: 'BR' },
+  { label: 'Costa Rica', value: '+506', code: 'CR' },
+  { label: 'República Dominicana', value: '+1-809', code: 'DO' },
+  { label: 'Ecuador', value: '+593', code: 'EC' },
+  { label: 'El Salvador', value: '+503', code: 'SV' },
+  { label: 'Guatemala', value: '+502', code: 'GT' },
+  { label: 'Honduras', value: '+504', code: 'HN' },
+  { label: 'Mexico', value: '+52', code: 'MX' },
+  { label: 'Panama', value: '+507', code: 'PA' },
+  { label: 'Paraguay', value: '+595', code: 'PY' },
+  { label: 'Peru', value: '+51', code: 'PE' },
+  { label: 'Uruguay', value: '+598', code: 'UY' },
+  { label: 'Venezuela', value: '+58', code: 'VE' },
   { label: 'Estados Unidos', value: '+1', code: 'US' },
 ] as const;
-
