@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Bot, LogIn, Sparkles, UserPlus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 interface WelcomeSlideProps {
@@ -9,15 +10,16 @@ interface WelcomeSlideProps {
 }
 
 export function WelcomeSlide({ onGetStarted, onLogin }: WelcomeSlideProps) {
-  /* //an effect to check if the user is logged in (existing token in local storage)
+  const router = useRouter();
+
+  // Efecto para verificar si el usuario está autenticado
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      // reload the page
-      window.location.reload();
+      router.push('/dashboard');
     }
-  }, []);
- */
+  }, [router]);
+
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-lg mx-auto">
       <motion.div
@@ -33,7 +35,7 @@ export function WelcomeSlide({ onGetStarted, onLogin }: WelcomeSlideProps) {
 
       <div className="w-full grid grid-cols-2 gap-4 mb-8">
         <Button
-          onClick={onGetStarted}
+          onClick={() => router.push('/auth')}
           size="lg"
           className="w-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-2"
         >
@@ -41,7 +43,7 @@ export function WelcomeSlide({ onGetStarted, onLogin }: WelcomeSlideProps) {
           Registro
         </Button>
         <Button
-          onClick={onLogin}
+          onClick={() => router.push('/auth?mode=login')}
           variant="outline"
           size="lg"
           className="w-full border-purple-600 text-purple-600 hover:bg-purple-50 flex items-center justify-center gap-2"

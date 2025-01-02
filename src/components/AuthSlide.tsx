@@ -6,50 +6,42 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RegistrationData } from '@/types/registration';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Eye, EyeOff, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 interface UserInfoStepProps {
   data: RegistrationData;
   onUpdate: (data: Partial<RegistrationData>) => void;
   onNext: () => void;
+  defaultMode?: 'login' | 'register';
 }
 
 const SERVICE_PASSWORD = 'ItLY51H2fh';
 
-export function UserInfoStep({ data, onUpdate, onNext }: UserInfoStepProps) {
+export function UserInfoStep({
+  data,
+  onUpdate,
+  onNext,
+  defaultMode = 'register',
+}: UserInfoStepProps) {
   const [error, setError] = useState('');
   const [showServicePassword, setShowServicePassword] = useState(false);
   const [showUserPassword, setShowUserPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(
-    window.location.hash.includes('#login')
-  );
+  const [isLogin, setIsLogin] = useState(defaultMode === 'login');
   const [servicePassword, setServicePassword] = useState('');
   const [userPassword, setUserPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-
-  // Efecto para manejar cambios en el hash
-  useEffect(() => {
-    const handleHashChange = () => {
-      setIsLogin(window.location.hash.includes('#login'));
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  const router = useRouter();
 
   // Actualizar el hash cuando cambia la pestaña
   const handleTabChange = (value: string) => {
-    setIsLogin(value === 'login');
+    const newIsLogin = value === 'login';
+    setIsLogin(newIsLogin);
     setError('');
     setUserPassword('');
     setServicePassword('');
-
-    // Actualizar el hash sin cambiar la ruta principal
-    const mainPath =
-      window.location.hash.split('#')[1]?.split('/')[1] || 'user-info';
-    window.location.hash =
-      value === 'login' ? `/user-info#login` : `/user-info`;
+    router.push(`/auth${newIsLogin ? '?mode=login' : ''}`);
   };
 
   const validatePassword = (password: string) => {
@@ -108,7 +100,7 @@ export function UserInfoStep({ data, onUpdate, onNext }: UserInfoStepProps) {
           throw new Error(result.error || 'Error en el registro');
         }
 
-        // Mostrar modal de éxito
+        // Solo mostrar el modal de éxito
         setShowSuccessModal(true);
       } else {
         // Login
@@ -149,9 +141,9 @@ export function UserInfoStep({ data, onUpdate, onNext }: UserInfoStepProps) {
             throw new Error('Error al establecer la sesión');
           }
 
-          // Esperar un momento y redirigir
+          // Esperar un momento y redirigir al dashboard
           await new Promise((resolve) => setTimeout(resolve, 500));
-          window.location.hash = '/welcome';
+          router.push('/dashboard');
         }
       }
     } catch (err) {
@@ -168,13 +160,13 @@ export function UserInfoStep({ data, onUpdate, onNext }: UserInfoStepProps) {
     setServicePassword('');
     setUserPassword('');
     // Cambiar a la pestaña de login
-    window.location.hash = '/user-info#login';
+    router.push('/auth?mode=login');
   };
 
   return (
     <>
       <Tabs
-        defaultValue={isLogin ? 'login' : 'register'}
+        value={isLogin ? 'login' : 'register'}
         className="w-full"
         onValueChange={handleTabChange}
       >
@@ -369,10 +361,10 @@ export function UserInfoStep({ data, onUpdate, onNext }: UserInfoStepProps) {
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  {isLogin ? 'Iniciando sesión...' : 'Procesando...'}
+                  Procesando...
                 </div>
               ) : (
-                'Iniciar Sesión'
+                <span>{!isLogin ? 'Registrarse' : 'Iniciar Sesión'}</span>
               )}
             </Button>
           </form>

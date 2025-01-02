@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { jwtDecode } from 'jwt-decode';
 import { LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 interface AuthProviderProps {
@@ -10,6 +11,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,7 +51,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setIsAuthenticated(false);
-        window.location.hash = '/welcome';
+        router.replace('/');
       } else {
         setIsAuthenticated(true);
       }
@@ -58,7 +60,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setIsAuthenticated(false);
-      window.location.hash = '/welcome';
+      router.replace('/');
     } finally {
       setIsLoading(false);
     }
@@ -74,16 +76,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     };
 
-    // Observar cambios en el hash de la URL
-    const handleHashChange = () => {
-      const token = localStorage.getItem('token');
-      if (token && !isAuthenticated) {
-        checkAuth();
-      }
-    };
-
     window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('hashchange', handleHashChange);
 
     // Crear un observador para cambios en localStorage dentro de la misma ventana
     const interval = setInterval(() => {
@@ -92,15 +85,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         checkAuth();
       } else if (!token && isAuthenticated) {
         setIsAuthenticated(false);
+        router.replace('/');
       }
     }, 1000);
 
     return () => {
       window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('hashchange', handleHashChange);
       clearInterval(interval);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
@@ -121,7 +114,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     setIsAuthenticated(false);
-    window.location.hash = '/welcome';
+    router.push('/');
   };
 
   if (isLoading) {

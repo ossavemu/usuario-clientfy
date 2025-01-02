@@ -6,13 +6,13 @@ import { jwtDecode } from 'jwt-decode';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { RegistrationData } from '../types/registration';
-import { DashboardSlide } from './DashboardSlide';
-import { CreateBotStep } from './steps/create-bot';
-import { ImageUploadStep } from './steps/image-upload';
-import { PhoneStep } from './steps/phone';
-import { PromptStep } from './steps/prompt';
-import { TrainingFilesStep } from './steps/training-files';
+import { RegistrationData } from '../../types/registration';
+import { DashboardSlide } from '../DashboardSlide';
+import { CreateBotStep } from '../steps/create-bot';
+import { ImageUploadStep } from '../steps/image-upload';
+import { PhoneStep } from '../steps/phone';
+import { PromptStep } from '../steps/prompt';
+import { TrainingFilesStep } from '../steps/training-files';
 
 const steps = [
   { name: 'Dashboard', path: '' },

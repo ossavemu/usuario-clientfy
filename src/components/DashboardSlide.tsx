@@ -7,6 +7,7 @@ import {
   Globe,
   Image as ImageIcon,
   Loader2,
+  LogOut,
   Mail,
   Phone,
   Rocket,
@@ -20,6 +21,7 @@ interface DashboardSlideProps {
   onNavigate: (step: number) => void;
   userEmail: string | null;
   onUpdate: (data: Partial<RegistrationData>) => void;
+  onLogout: () => void;
 }
 
 interface StepCardProps {
@@ -140,48 +142,25 @@ export function DashboardSlide({
   onNavigate,
   userEmail,
   onUpdate,
+  onLogout,
 }: DashboardSlideProps) {
   const [isVerifyingBot, setIsVerifyingBot] = useState(true);
   const [canCreateBot, setCanCreateBot] = useState(false);
-
-  // Log inicial para ver los datos que recibimos
-  useEffect(() => {
-    console.log('DashboardSlide - Datos recibidos:', {
-      data,
-      userEmail,
-      isVerifyingBot,
-      canCreateBot,
-    });
-  }, [data, userEmail, isVerifyingBot, canCreateBot]);
 
   // Efecto para verificar el bot y datos adicionales
   useEffect(() => {
     const verifyBotData = async () => {
       if (!userEmail) {
-        console.log('No hay userEmail');
         setIsVerifyingBot(false);
         return;
       }
 
       try {
-        // Obtener datos del usuario
-        const userResponse = await fetch(`/api/user?email=${userEmail}`);
-        if (userResponse.ok) {
-          const userData = await userResponse.json();
-          console.log('Datos del usuario recibidos:', userData);
-          if (userData.user?.name) {
-            onUpdate({ name: userData.user.name });
-          }
-        }
-
         // Obtener datos del teléfono
-        console.log('Obteniendo datos del teléfono para:', userEmail);
         const phoneResponse = await fetch(`/api/phone?email=${userEmail}`);
         const phoneData = phoneResponse.ok ? await phoneResponse.json() : null;
-        console.log('Datos del teléfono recibidos:', phoneData);
 
         if (phoneData?.phone) {
-          console.log('Actualizando datos del teléfono');
           onUpdate({
             phone: phoneData.phone.phone,
             countryCode: phoneData.phone.countryCode,
@@ -193,17 +172,14 @@ export function DashboardSlide({
               /\+/g,
               ''
             );
-          console.log('Obteniendo prompt para el teléfono:', phoneNumber);
           const promptResponse = await fetch(
             `/api/prompt?phoneNumber=${phoneNumber}`
           );
           const promptData = promptResponse.ok
             ? await promptResponse.json()
             : null;
-          console.log('Datos del prompt recibidos:', promptData);
 
           if (promptData?.prompt) {
-            console.log('Actualizando prompt');
             onUpdate({ prompt: promptData.prompt });
           }
 
@@ -217,7 +193,7 @@ export function DashboardSlide({
     };
 
     verifyBotData();
-  }, [userEmail]); // Solo depende de userEmail
+  }, [userEmail, onUpdate]);
 
   // Función para obtener el saludo según la hora
   const getGreeting = () => {
@@ -277,11 +253,17 @@ export function DashboardSlide({
   return (
     <div className="space-y-6">
       <motion.div
-        className="text-center"
+        className="text-center relative"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
+        <button
+          onClick={onLogout}
+          className="absolute right-0 top-0 text-gray-500 hover:text-gray-700"
+        >
+          <LogOut className="w-5 h-5" />
+        </button>
         <h2 className={`text-2xl font-bold ${greeting.color}`}>
           {greeting.text}
           {data?.name ? (

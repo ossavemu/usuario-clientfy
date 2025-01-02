@@ -79,14 +79,12 @@ export async function POST(request: Request) {
     // Guardar usuario en Redis
     await redis.hset('users', data.email, JSON.stringify(user));
 
-    // Generar token JWT
+    // Generar token JWT solo para la respuesta
     const token = jwt.sign({ email: data.email }, JWT_SECRET, {
       expiresIn: '24h',
     });
 
-    // Guardar sesión en Redis
-    await redis.set(`session:${data.email}`, token, 'EX', 86400); // 24 horas
-
+    // Ya no guardamos la sesión aquí, se hará en el login
     return NextResponse.json({ token, user: { ...user, password: undefined } });
   } catch (error) {
     console.error('Error en registro:', error);
