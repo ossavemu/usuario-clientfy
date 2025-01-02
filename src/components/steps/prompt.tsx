@@ -1,5 +1,11 @@
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { StepNavigation } from '@/components/ui/step-navigation';
 import { Textarea } from '@/components/ui/textarea';
 import { RotateCcw, Wand2 } from 'lucide-react';
@@ -24,6 +30,7 @@ export function PromptStep({
   const [originalPrompt, setOriginalPrompt] = useState('');
   const [showRevert, setShowRevert] = useState(false);
   const [existingPrompt, setExistingPrompt] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(true);
 
   // Cargar prompt existente
   useEffect(() => {
@@ -134,82 +141,68 @@ export function PromptStep({
 
   return (
     <div className="space-y-2 relative overflow-hidden rounded-lg">
-      <div className="space-y-2 overflow-auto max-h-[calc(100vh-300px)] hide-scrollbar rounded-lg">
-        <Card>
-          <CardContent className="pt-4">
-            {existingPrompt ? (
-              <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-green-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-green-700">
-                      Ya tienes un prompt guardado. Puedes modificarlo si lo
-                      deseas.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg
-                      className="h-5 w-5 text-yellow-400"
-                      viewBox="0 0 20 20"
-                      fill="currentColor"
-                    >
-                      <path
-                        fillRule="evenodd"
-                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <p className="text-sm text-yellow-700">
-                      Debes crear y guardar un prompt antes de continuar.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <p className="text-xs text-muted-foreground mb-4">
+      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>¿Qué es un Prompt?</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
               Un prompt es una instrucción o conjunto de instrucciones que le
               das a tu bot para definir su comportamiento, conocimientos y
               personalidad. Es como programar la "mente" de tu asistente
-              virtual. Su importancia radica en que:
+              virtual.
             </p>
-            <ul className="list-disc list-inside text-xs text-muted-foreground space-y-1">
-              <li>Define cómo tu bot interactuará con los usuarios</li>
-              <li>Establece el tono y estilo de comunicación</li>
-              <li>
-                Determina qué tipo de información y ayuda puede proporcionar
-              </li>
-              <li>
-                Ayuda a mantener la consistencia en las respuestas del bot
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">
+                Su importancia radica en que:
+              </p>
+              <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                <li>Define cómo tu bot interactuará con los usuarios</li>
+                <li>Establece el tono y estilo de comunicación</li>
+                <li>
+                  Determina qué tipo de información y ayuda puede proporcionar
+                </li>
+                <li>
+                  Ayuda a mantener la consistencia en las respuestas del bot
+                </li>
+              </ul>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <div className="space-y-4 overflow-auto max-h-[calc(100vh-300px)] hide-scrollbar rounded-lg">
+        {existingPrompt && (
+          <div className="bg-green-50 border-l-4 border-green-400 p-4">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-green-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-green-700">
+                  Ya tienes un prompt guardado. Puedes modificarlo si lo deseas.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="space-y-4">
           <Textarea
             value={data.prompt}
             onChange={(e) => onUpdate({ prompt: e.target.value })}
-            placeholder="Ejemplo: Eres un vendedor experto en gafas de sol de OpticaVision. Tu objetivo es maximizar las ventas identificando las necesidades del cliente y recomendando los productos más adecuados. Tienes acceso a un catálogo de imágenes y documentos técnicos que puedes compartir con los clientes. Manejas productos que van desde 20 USD hasta 150 USD y estás ubicado en Plaza Central, Local 23. Debes mostrar empatía, conocimiento profundo del producto y usar técnicas de venta consultiva. Al interactuar con clientes, prioriza entender su estilo de vida y presupuesto. Maneja objeciones sobre precio enfatizando calidad y garantía. Nunca presiones al cliente ni menciones a la competencia..."
+            placeholder="Ejemplo: Eres un vendedor experto en gafas de sol de OpticaVision. Tu objetivo es maximizar las ventas identificando las necesidades del cliente y recomendando los productos más adecuados..."
             className="min-h-[200px] hide-scrollbar"
             disabled={isLoading}
           />
@@ -238,7 +231,7 @@ export function PromptStep({
             )}
           </div>
 
-          <div className="bg-purple-50 p-4 rounded-lg space-y-2">
+          <Card className="bg-purple-50 p-4 space-y-2 border-purple-100">
             <p className="text-sm font-medium">
               💡 Tip: Usa el botón "Mejorar con IA" para:
             </p>
@@ -247,7 +240,7 @@ export function PromptStep({
               <li>Agregar manejo de situaciones comunes</li>
               <li>Establecer límites claros para el chatbot</li>
             </ul>
-          </div>
+          </Card>
         </div>
       </div>
 

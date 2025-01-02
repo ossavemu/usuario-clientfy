@@ -32,6 +32,12 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!data.countryCode) {
+      onUpdate({ countryCode: '+52', serviceType: 'qr' });
+    }
+  }, []);
+
+  useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -210,15 +216,15 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
               <Label>Celular</Label>
               <div className="flex gap-2">
                 <Select
-                  value={data.countryCode}
+                  value={data.countryCode || '+52'}
                   onValueChange={(value) => onUpdate({ countryCode: value })}
                   disabled={isLoading}
                 >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="México (+52)" />
                   </SelectTrigger>
                   <SelectContent
-                    className="w-[200px] z-[100]"
+                    className="w-[240px] z-[100]"
                     position="popper"
                     side="bottom"
                     sideOffset={4}
@@ -255,29 +261,43 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
             <div className="space-y-2">
               <Label>Tipo de Servicio</Label>
               <RadioGroup
+                defaultValue="qr"
                 value={data.serviceType}
                 onValueChange={(value) =>
                   onUpdate({ serviceType: value as 'whatsapp' | 'qr' })
                 }
                 disabled={isLoading}
+                className="space-y-4"
               >
-                <div className="flex items-center space-x-2 p-4 border rounded-lg opacity-50 cursor-not-allowed">
-                  <RadioGroupItem value="whatsapp" id="whatsapp" disabled />
-                  <Label htmlFor="whatsapp" className="flex-1">
-                    <div>WhatsApp Business</div>
-                    <div className="text-sm text-muted-foreground">
+                <div className="flex items-start space-x-3 p-4 border rounded-lg opacity-50 cursor-not-allowed bg-gray-50/50">
+                  <RadioGroupItem
+                    value="whatsapp"
+                    id="whatsapp"
+                    disabled
+                    className="mt-1 w-5 h-5 border-2 data-[state=checked]:border-purple-600 data-[state=checked]:text-purple-600"
+                  />
+                  <Label
+                    htmlFor="whatsapp"
+                    className="flex-1 cursor-not-allowed"
+                  >
+                    <div className="font-medium">WhatsApp Business</div>
+                    <div className="text-sm text-muted-foreground mt-1">
                       Servicio completo de WhatsApp Business API
                     </div>
-                    <div className="text-xs text-purple-600">
+                    <div className="text-xs text-purple-600 mt-1">
                       Feature en desarrollo
                     </div>
                   </Label>
                 </div>
-                <div className="flex items-center space-x-2 p-4 border rounded-lg">
-                  <RadioGroupItem value="qr" id="qr" />
-                  <Label htmlFor="qr" className="flex-1">
-                    <div>Solo QR</div>
-                    <div className="text-sm text-muted-foreground">
+                <div className="flex items-start space-x-3 p-4 border rounded-lg hover:bg-gray-50/80 transition-colors">
+                  <RadioGroupItem
+                    value="qr"
+                    id="qr"
+                    className="mt-1 w-5 h-5 border-2 data-[state=checked]:border-purple-600 data-[state=checked]:text-purple-600"
+                  />
+                  <Label htmlFor="qr" className="flex-1 cursor-pointer">
+                    <div className="font-medium">Solo QR</div>
+                    <div className="text-sm text-muted-foreground mt-1">
                       Acceso básico con código QR
                     </div>
                   </Label>

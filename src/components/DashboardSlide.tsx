@@ -314,7 +314,7 @@ export function DashboardSlide({
           title="Registro de Celular"
           description=""
           status={hasPhone ? 'completed' : 'pending'}
-          onClick={() => onNavigate(2)}
+          onClick={() => onNavigate(1)}
           delay={0.3}
         />
 
@@ -323,7 +323,7 @@ export function DashboardSlide({
           title="Configura tu Asistente"
           description=""
           status={hasPrompt ? 'completed' : 'pending'}
-          onClick={() => onNavigate(3)}
+          onClick={() => onNavigate(2)}
           delay={0.4}
         />
 
@@ -332,7 +332,7 @@ export function DashboardSlide({
           title="Imágenes del Asistente"
           description=""
           status={hasImages ? 'completed' : 'optional'}
-          onClick={() => onNavigate(4)}
+          onClick={() => onNavigate(3)}
           delay={0.5}
         />
 
@@ -341,7 +341,7 @@ export function DashboardSlide({
           title="Archivos de Entrenamiento"
           description=""
           status={hasTrainingFiles ? 'completed' : 'optional'}
-          onClick={() => onNavigate(5)}
+          onClick={() => onNavigate(4)}
           delay={0.6}
         />
 
@@ -366,10 +366,10 @@ export function DashboardSlide({
           }
           onClick={() => {
             if (!isVerifyingBot && canCreateBot) {
-              onNavigate(6);
+              onNavigate(5);
             } else if (!isVerifyingBot) {
               if (!hasPhone) {
-                onNavigate(3);
+                onNavigate(1);
               } else if (!hasPrompt) {
                 onNavigate(2);
               }

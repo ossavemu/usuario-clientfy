@@ -48,9 +48,10 @@ const generateFlag = (code: string) => {
           height="15"
           viewBox="0 0 3 2"
         >
-          <rect width="3" height="2" fill="#d52b1e" />
-          <rect width="1.5" height="1" fill="#fff" />
-          <rect width="1.5" height="1" fill="#0033a0" />
+          <rect width="3" height="2" fill="#fff" />
+          <rect width="1" height="1" fill="#0039a6" />
+          <rect width="3" height="1" y="1" fill="#d52b1e" />
+          <path d="M0.5,0.5 L0.5,0.5 L0.25,0.25 L0.75,0.25 Z" fill="#fff" />
         </svg>
       );
     case 'CO':
@@ -179,9 +180,16 @@ const generateFlag = (code: string) => {
           height="15"
           viewBox="0 0 3 2"
         >
-          <rect width="3" height="2" fill="#d52b1e" />
-          <rect width="3" height="1.2" y="0.4" fill="#fff" />
-          <rect width="3" height="0.4" y="0.8" fill="#0033a0" />
+          <rect width="3" height="0.67" fill="#d52b1e" />
+          <rect width="3" height="0.67" y="0.67" fill="#fff" />
+          <rect width="3" height="0.67" y="1.33" fill="#0039a6" />
+          <circle cx="1.5" cy="1" r="0.3" fill="#ffda44" />
+          <g transform="translate(1.5,1) scale(0.15)">
+            <path
+              d="M0,-2 L0.6,0.8 L-1,0.3 L1,0.3 L-0.6,0.8 Z"
+              fill="#33691e"
+            />
+          </g>
         </svg>
       );
     case 'PE':
