@@ -1,5 +1,6 @@
 "use client";
 
+import React, { Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { UserInfoStep } from "@/components/AuthSlide";
 import { type RegistrationData } from "@/types/registration";
@@ -40,16 +41,18 @@ export default function AuthPage() {
 
   return (
     <div className="w-full h-full flex items-center justify-center p-4">
-      <Card className="w-full max-w-[500px]">
-        <CardContent className="p-6">
-          <UserInfoStep
-            data={formData}
-            onUpdate={handleUpdate}
-            onNext={handleNext}
-            defaultMode={isLogin ? "login" : "register"}
-          />
-        </CardContent>
-      </Card>
+      <Suspense fallback={<div>Cargando...</div>}>
+        <Card className="w-full max-w-[500px]">
+          <CardContent className="p-6">
+            <UserInfoStep
+              data={formData}
+              onUpdate={handleUpdate}
+              onNext={handleNext}
+              defaultMode={isLogin ? "login" : "register"}
+            />
+          </CardContent>
+        </Card>
+      </Suspense>
     </div>
   );
 }
