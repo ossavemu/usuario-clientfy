@@ -1,34 +1,32 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { StepNavigation } from '@/components/ui/step-navigation';
-import { X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { useDropzone } from 'react-dropzone';
-import { toast } from 'sonner';
+import { Button } from "@/components/ui/button";
+import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { StepNavigation } from "@/components/ui/step-navigation";
+import { X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { useDropzone } from "react-dropzone";
+import { toast } from "sonner";
 import {
   type RegistrationData,
   type TrainingFile,
-} from '../../types/registration';
+} from "../../types/registration";
 
 interface TrainingFilesStepProps {
   data: RegistrationData;
-  onUpdate: (data: Partial<RegistrationData>) => void;
   onNext: () => void;
   onBack: () => void;
 }
 
 export function TrainingFilesStep({
   data,
-  onUpdate,
   onNext,
   onBack,
 }: TrainingFilesStepProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [uploadedFiles, setUploadedFiles] = useState<
     Array<{ name: string; url: string }>
   >([]);
@@ -36,7 +34,7 @@ export function TrainingFilesStep({
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     fileName: string;
-  }>({ isOpen: false, fileName: '' });
+  }>({ isOpen: false, fileName: "" });
 
   // Cargar archivos existentes
   useEffect(() => {
@@ -46,7 +44,7 @@ export function TrainingFilesStep({
         try {
           const phoneNumber = `${data.countryCode}${data.phone}`.replace(
             /\+/g,
-            ''
+            ""
           );
           const response = await fetch(
             `/api/training-files?phoneNumber=${phoneNumber}`
@@ -57,8 +55,8 @@ export function TrainingFilesStep({
             setUploadedFiles(result.files);
           }
         } catch (error) {
-          console.error('Error al cargar archivos existentes:', error);
-          setError('Error al cargar archivos existentes');
+          console.error("Error al cargar archivos existentes:", error);
+          setError("Error al cargar archivos existentes");
         } finally {
           setIsLoading(false);
         }
@@ -71,7 +69,7 @@ export function TrainingFilesStep({
   const onTrainingFilesDrop = useCallback((acceptedFiles: File[]) => {
     const newFiles = acceptedFiles.map((file) => ({
       id: Math.random().toString(36).substring(2, 9),
-      name: file.name.replace(/\.[^/.]+$/, ''),
+      name: file.name.replace(/\.[^/.]+$/, ""),
       file,
     }));
     setPendingFiles((prev) => [...prev, ...newFiles]);
@@ -80,11 +78,11 @@ export function TrainingFilesStep({
   const { getRootProps, getInputProps } = useDropzone({
     onDrop: onTrainingFilesDrop,
     accept: {
-      'text/plain': ['.txt'],
-      'application/pdf': ['.pdf'],
-      'application/msword': ['.doc'],
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
-        ['.docx'],
+      "text/plain": [".txt"],
+      "application/pdf": [".pdf"],
+      "application/msword": [".doc"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        [".docx"],
     },
   });
 
@@ -106,21 +104,21 @@ export function TrainingFilesStep({
     if (!data.countryCode || !data.phone) return;
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       const formData = new FormData();
       pendingFiles.forEach((file) => {
-        formData.append('files', file.file);
-        formData.append('names', file.name);
+        formData.append("files", file.file);
+        formData.append("names", file.name);
       });
       formData.append(
-        'phoneNumber',
-        `${data.countryCode}${data.phone}`.replace(/\+/g, '')
+        "phoneNumber",
+        `${data.countryCode}${data.phone}`.replace(/\+/g, "")
       );
 
-      const response = await fetch('/api/training-files', {
-        method: 'POST',
+      const response = await fetch("/api/training-files", {
+        method: "POST",
         body: formData,
       });
 
@@ -130,11 +128,11 @@ export function TrainingFilesStep({
         setUploadedFiles((prev) => [...prev, ...result.files]);
         setPendingFiles([]);
       } else {
-        setError(result.error || 'Error al subir los archivos');
+        setError(result.error || "Error al subir los archivos");
       }
     } catch (error) {
-      console.error('Error al subir archivos:', error);
-      setError('Error al subir los archivos');
+      console.error("Error al subir archivos:", error);
+      setError("Error al subir los archivos");
     } finally {
       setIsLoading(false);
     }
@@ -146,10 +144,10 @@ export function TrainingFilesStep({
 
     setIsLoading(true);
     try {
-      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
+      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, "");
       const response = await fetch(
         `/api/files/delete?phoneNumber=${phoneNumber}&fileName=${fileName}&type=training`,
-        { method: 'DELETE' }
+        { method: "DELETE" }
       );
 
       const result = await response.json();
@@ -157,13 +155,13 @@ export function TrainingFilesStep({
       if (result.success) {
         const newFiles = uploadedFiles.filter((file) => file.name !== fileName);
         setUploadedFiles(newFiles);
-        toast.success('Archivo eliminado exitosamente');
+        toast.success("Archivo eliminado exitosamente");
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error('Error al eliminar archivo:', error);
-      toast.error('Error al eliminar el archivo');
+      console.error("Error al eliminar archivo:", error);
+      toast.error("Error al eliminar el archivo");
     } finally {
       setIsLoading(false);
     }
@@ -269,7 +267,7 @@ export function TrainingFilesStep({
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? 'Subiendo...' : 'Subir Archivos'}
+                {isLoading ? "Subiendo..." : "Subir Archivos"}
               </Button>
             </div>
           )}
@@ -292,7 +290,7 @@ export function TrainingFilesStep({
 
       <ConfirmDeleteModal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, fileName: '' })}
+        onClose={() => setDeleteModal({ isOpen: false, fileName: "" })}
         onConfirm={confirmDelete}
         title="Eliminar Archivo"
         message="¿Estás seguro de que deseas eliminar este archivo de entrenamiento? Esta acción no se puede deshacer."

@@ -48,7 +48,8 @@ export async function POST(request: Request) {
     await redis.set(`session:${email}`, token, 'EX', 86400); // 24 horas
 
     // Devolver usuario sin la contraseña
-    const { password: _, ...userWithoutPassword } = user;
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
 
     return NextResponse.json({
       token,

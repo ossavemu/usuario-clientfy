@@ -30,12 +30,12 @@ export async function GET(request: Request) {
       prompt: result.prompt,
       url: result.url,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en GET /api/prompt:', error);
     return NextResponse.json(
       {
-        error: error.message || 'Error al obtener el prompt',
-        details: error.details || {},
+        error: 'Error al obtener el prompt',
+        details: error,
       },
       { status: 500 }
     );
@@ -61,12 +61,12 @@ export async function POST(request: Request) {
       url: result.url,
       prompt: result.prompt,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en POST /api/prompt:', error);
     return NextResponse.json(
       {
-        error: error.message || 'Error al guardar el prompt',
-        details: error.details || {},
+        error: 'Error al guardar el prompt',
+        details: error,
       },
       { status: 500 }
     );

@@ -27,7 +27,10 @@ export async function POST(request: Request) {
 
       return NextResponse.json({ message: 'Sesión cerrada exitosamente' });
     } catch (error) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Token inválido', details: error },
+        { status: 401 }
+      );
     }
   } catch (error) {
     console.error('Error en logout:', error);

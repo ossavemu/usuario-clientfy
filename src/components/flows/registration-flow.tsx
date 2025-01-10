@@ -1,26 +1,26 @@
-'use client';
+"use client";
 
-import { Card, CardContent } from '@/components/ui/card';
-import { AnimatePresence, motion } from 'framer-motion';
-import { jwtDecode } from 'jwt-decode';
-import { Loader2 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { RegistrationData } from '../../types/registration';
-import { DashboardSlide } from '../DashboardSlide';
-import { CreateBotStep } from '../steps/create-bot';
-import { ImageUploadStep } from '../steps/image-upload';
-import { PhoneStep } from '../steps/phone';
-import { PromptStep } from '../steps/prompt';
-import { TrainingFilesStep } from '../steps/training-files';
+import { Card, CardContent } from "@/components/ui/card";
+import { AnimatePresence, motion } from "framer-motion";
+import { jwtDecode } from "jwt-decode";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { type RegistrationData } from "../../types/registration";
+import { DashboardSlide } from "../DashboardSlide";
+import { CreateBotStep } from "../steps/create-bot";
+import { ImageUploadStep } from "../steps/image-upload";
+import { PhoneStep } from "../steps/phone";
+import { PromptStep } from "../steps/prompt";
+import { TrainingFilesStep } from "../steps/training-files";
 
 const steps = [
-  { name: 'Dashboard', path: '' },
-  { name: 'Registro de Celular', path: 'phone' },
-  { name: 'Configuración del Asistente', path: 'prompt' },
-  { name: 'Imágenes del Asistente', path: 'images' },
-  { name: 'Archivos de Entrenamiento', path: 'training' },
-  { name: 'Crear Asistente', path: 'create-assistant' },
+  { name: "Dashboard", path: "" },
+  { name: "Registro de Celular", path: "phone" },
+  { name: "Configuración del Asistente", path: "prompt" },
+  { name: "Imágenes del Asistente", path: "images" },
+  { name: "Archivos de Entrenamiento", path: "training" },
+  { name: "Crear Asistente", path: "create-assistant" },
 ];
 
 export default function RegistrationFlow() {
@@ -29,16 +29,16 @@ export default function RegistrationFlow() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
   const [formData, setFormData] = useState<RegistrationData>({
-    name: '',
-    email: '',
-    password: '',
-    phone: '',
-    countryCode: '',
-    serviceType: 'qr',
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    countryCode: "",
+    serviceType: "qr",
     images: [],
     trainingFiles: [],
-    prompt: '',
-    assistantName: '',
+    prompt: "",
+    assistantName: "",
   });
 
   const updateFormData = (data: Partial<RegistrationData>) => {
@@ -47,18 +47,18 @@ export default function RegistrationFlow() {
 
   const nextStep = () => {
     const nextIndex = Math.min(currentStep + 1, steps.length - 1);
-    window.location.hash = '/' + steps[nextIndex].path;
+    window.location.hash = "/" + steps[nextIndex].path;
     setCurrentStep(nextIndex);
   };
 
   const prevStep = () => {
     const prevIndex = Math.max(currentStep - 1, 0);
-    window.location.hash = '/' + steps[prevIndex].path;
+    window.location.hash = "/" + steps[prevIndex].path;
     setCurrentStep(prevIndex);
   };
 
   const goToStep = (stepIndex: number) => {
-    window.location.hash = '/' + steps[stepIndex].path;
+    window.location.hash = "/" + steps[stepIndex].path;
     setCurrentStep(stepIndex);
   };
 
@@ -66,16 +66,16 @@ export default function RegistrationFlow() {
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
         if (!token) {
-          router.push('/');
+          router.push("/");
           return;
         }
 
         const decoded = jwtDecode<{ email: string }>(token);
         setUserEmail(decoded.email);
 
-        const userData = localStorage.getItem('user');
+        const userData = localStorage.getItem("user");
         if (userData) {
           const user = JSON.parse(userData);
           updateFormData(user);
@@ -90,10 +90,10 @@ export default function RegistrationFlow() {
           }
         }
       } catch (error) {
-        console.error('Error al cargar datos:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        router.push('/');
+        console.error("Error al cargar datos:", error);
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+        router.push("/");
       } finally {
         setIsLoadingInitialData(false);
       }
@@ -105,25 +105,25 @@ export default function RegistrationFlow() {
   // Manejar cierre de sesión
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       if (token) {
-        await fetch('/api/auth/logout', {
-          method: 'POST',
+        await fetch("/api/auth/logout", {
+          method: "POST",
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({ email: userEmail }),
         });
       }
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      router.replace('/');
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      router.replace("/");
     } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      router.replace('/');
+      console.error("Error al cerrar sesión:", error);
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      router.replace("/");
     }
   };
 
@@ -179,7 +179,6 @@ export default function RegistrationFlow() {
         return (
           <TrainingFilesStep
             data={formData}
-            onUpdate={updateFormData}
             onNext={nextStep}
             onBack={prevStep}
           />

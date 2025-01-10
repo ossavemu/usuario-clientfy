@@ -35,12 +35,12 @@ export async function DELETE(request: Request) {
       success: true,
       message: 'Archivo eliminado exitosamente',
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en DELETE /api/files/delete:', error);
     return NextResponse.json(
       {
-        error: error.message || 'Error al eliminar el archivo',
-        details: error.details || {},
+        error: 'Error al eliminar el archivo',
+        details: error,
       },
       { status: 500 }
     );

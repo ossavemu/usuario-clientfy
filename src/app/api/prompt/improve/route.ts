@@ -120,17 +120,17 @@ export async function POST(request: Request) {
       success: true,
       improvedPrompt,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en POST /api/prompt/improve:', {
       error,
-      message: error.message,
-      stack: error.stack,
+      message: error instanceof Error ? error.message : 'Error desconocido',
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json(
       {
-        error: error.message || 'Error al mejorar el prompt',
-        details: error.stack,
+        error: 'Error al mejorar el prompt',
+        details: error,
       },
       { status: 500 }
     );

@@ -44,12 +44,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ success: true, urls });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en POST /api/images:', error);
     return NextResponse.json(
       {
-        error: error.message || 'Error al subir las imágenes',
-        details: error.details || {},
+        error: 'Error al subir las imágenes',
+        details: error,
       },
       { status: 500 }
     );
@@ -70,12 +70,12 @@ export async function GET(request: Request) {
 
     const images = await getUserImages(phoneNumber);
     return NextResponse.json({ success: true, images });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en GET /api/images:', error);
     return NextResponse.json(
       {
-        error: error.message || 'Error al obtener las imágenes',
-        details: error.details || {},
+        error: 'Error al obtener las imágenes',
+        details: error,
       },
       { status: 500 }
     );

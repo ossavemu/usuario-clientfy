@@ -1,17 +1,17 @@
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { StepNavigation } from '@/components/ui/step-navigation';
-import { Textarea } from '@/components/ui/textarea';
-import { RotateCcw, Wand2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
-import { type RegistrationData } from '../../types/registration';
+} from "@/components/ui/dialog";
+import { StepNavigation } from "@/components/ui/step-navigation";
+import { Textarea } from "@/components/ui/textarea";
+import { RotateCcw, Wand2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { type RegistrationData } from "../../types/registration";
 
 interface PromptStepProps {
   data: RegistrationData;
@@ -27,7 +27,7 @@ export function PromptStep({
   onBack,
 }: PromptStepProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [originalPrompt, setOriginalPrompt] = useState('');
+  const [originalPrompt, setOriginalPrompt] = useState("");
   const [showRevert, setShowRevert] = useState(false);
   const [existingPrompt, setExistingPrompt] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(true);
@@ -40,7 +40,7 @@ export function PromptStep({
       try {
         const phoneNumber = `${data.countryCode}${data.phone}`.replace(
           /\+/g,
-          ''
+          ""
         );
         const response = await fetch(`/api/prompt?phoneNumber=${phoneNumber}`);
 
@@ -51,31 +51,31 @@ export function PromptStep({
             setExistingPrompt(true);
           }
         } else if (response.status !== 404) {
-          console.error('Error al cargar prompt:', await response.text());
+          console.error("Error al cargar prompt:", await response.text());
         }
       } catch (error) {
-        console.error('Error al cargar prompt:', error);
+        console.error("Error al cargar prompt:", error);
       }
     };
 
     if (!existingPrompt) {
       loadExistingPrompt();
     }
-  }, [data.countryCode, data.phone, existingPrompt]);
+  }, [data.countryCode, data.phone, data.prompt, existingPrompt, onUpdate]);
 
   // Guardar prompt
   const handleSave = async () => {
     if (!data.countryCode || !data.phone || !data.prompt) {
-      toast.error('Por favor, escribe un prompt antes de guardarlo');
+      toast.error("Por favor, escribe un prompt antes de guardarlo");
       return;
     }
 
     setIsLoading(true);
     try {
-      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
-      const response = await fetch('/api/prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, "");
+      const response = await fetch("/api/prompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           phoneNumber,
           prompt: data.prompt,
@@ -85,14 +85,15 @@ export function PromptStep({
       const result = await response.json();
 
       if (result.success) {
-        toast.success('Prompt guardado exitosamente');
+        toast.success("Prompt guardado exitosamente");
         setExistingPrompt(true);
         onNext();
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
-      toast.error('Error al guardar el prompt');
+      console.error("Error al guardar el prompt:", error);
+      toast.error("Error al guardar el prompt");
     } finally {
       setIsLoading(false);
     }
@@ -101,7 +102,7 @@ export function PromptStep({
   // Mejorar prompt con IA
   const handleImprove = async () => {
     if (!data.prompt) {
-      toast.error('Por favor, escribe un prompt antes de mejorarlo');
+      toast.error("Por favor, escribe un prompt antes de mejorarlo");
       return;
     }
 
@@ -110,9 +111,9 @@ export function PromptStep({
       setOriginalPrompt(data.prompt);
       setShowRevert(true);
 
-      const response = await fetch('/api/prompt/improve', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/prompt/improve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: data.prompt }),
       });
 
@@ -120,12 +121,13 @@ export function PromptStep({
 
       if (result.success && result.improvedPrompt) {
         onUpdate({ prompt: result.improvedPrompt });
-        toast.success('Prompt mejorado exitosamente');
+        toast.success("Prompt mejorado exitosamente");
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
-      toast.error('Error al mejorar el prompt');
+      console.error("Error al mejorar el prompt:", error);
+      toast.error("Error al mejorar el prompt");
       setShowRevert(false);
     } finally {
       setIsLoading(false);
@@ -136,7 +138,7 @@ export function PromptStep({
   const handleRevert = () => {
     onUpdate({ prompt: originalPrompt });
     setShowRevert(false);
-    toast.success('Prompt revertido a la versión original');
+    toast.success("Prompt revertido a la versión original");
   };
 
   return (
@@ -150,8 +152,8 @@ export function PromptStep({
             <p className="text-sm text-muted-foreground">
               Un prompt es una instrucción o conjunto de instrucciones que le
               das a tu bot para definir su comportamiento, conocimientos y
-              personalidad. Es como programar la "mente" de tu asistente
-              virtual.
+              personalidad. Es como programar la &quot;mente&quot; de tu
+              asistente virtual.
             </p>
             <div className="space-y-2">
               <p className="text-sm font-medium">
@@ -233,7 +235,7 @@ export function PromptStep({
 
           <Card className="bg-purple-50 p-4 space-y-2 border-purple-100">
             <p className="text-sm font-medium">
-              💡 Tip: Usa el botón "Mejorar con IA" para:
+              💡 Tip: Usa el botón &quot;Mejorar con IA&quot; para:
             </p>
             <ul className="text-sm text-purple-700 space-y-1 list-disc list-inside">
               <li>Hacer tu prompt más profesional y efectivo</li>
@@ -254,7 +256,7 @@ export function PromptStep({
             isLoading || !data.prompt || (!existingPrompt && !data.prompt)
           }
           nextLabel={
-            existingPrompt ? 'Actualizar y Continuar' : 'Guardar y Continuar'
+            existingPrompt ? "Actualizar y Continuar" : "Guardar y Continuar"
           }
         />
       </div>

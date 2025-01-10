@@ -1,8 +1,14 @@
-import { RegistrationData } from '@/types/registration';
-import Redis from 'ioredis';
-import jwt from 'jsonwebtoken';
+import { type RegistrationData } from "@/types/registration";
+import Redis from "ioredis";
+import jwt from "jsonwebtoken";
 
-const redis = new Redis(process.env.REDIS_URL || '', {
+export interface PhoneData {
+  countryCode: string;
+  phone: string;
+  serviceType?: string;
+}
+
+const redis = new Redis(process.env.REDIS_URL || "", {
   tls: {
     rejectUnauthorized: false,
   },
@@ -14,17 +20,17 @@ const redis = new Redis(process.env.REDIS_URL || '', {
 });
 
 // Manejar eventos de Redis
-redis.on('error', (error) => {
-  console.error('Error de conexión Redis:', error);
+redis.on("error", (error) => {
+  console.error("Error de conexión Redis:", error);
 });
 
-redis.on('connect', () => {
-  console.log('Conectado exitosamente a Redis');
+redis.on("connect", () => {
+  console.log("Conectado exitosamente a Redis");
 });
 
 export async function saveUser(data: RegistrationData) {
-  const token = jwt.sign({ email: data.email }, 'tu_secreto_jwt', {
-    expiresIn: '1h',
+  const token = jwt.sign({ email: data.email }, "tu_secreto_jwt", {
+    expiresIn: "1h",
   });
   await redis.set(`user:${data.email}`, JSON.stringify(data));
   return token;
@@ -40,7 +46,7 @@ export async function getUserPhone(email: string) {
   return phone ? JSON.parse(phone) : null;
 }
 
-export async function saveUserPhone(email: string, phoneData: any) {
+export async function saveUserPhone(email: string, phoneData: PhoneData) {
   await redis.set(`phone:${email}`, JSON.stringify(phoneData));
   return true;
 }
@@ -50,7 +56,7 @@ export async function deleteUserPhone(email: string) {
   return true;
 }
 
-export async function updateUserPhone(email: string, phoneData: any) {
+export async function updateUserPhone(email: string, phoneData: PhoneData) {
   await redis.set(`phone:${email}`, JSON.stringify(phoneData));
   return true;
 }

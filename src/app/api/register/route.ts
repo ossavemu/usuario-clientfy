@@ -1,14 +1,14 @@
-'use server';
+"use server";
 
-import { RegistrationData } from '@/types/registration';
-import bcrypt from 'bcryptjs';
-import Redis from 'ioredis';
-import jwt from 'jsonwebtoken';
-import { NextResponse } from 'next/server';
+import { type RegistrationData } from "@/types/registration";
+import bcrypt from "bcryptjs";
+import Redis from "ioredis";
+import jwt from "jsonwebtoken";
+import { NextResponse } from "next/server";
 
-const redis = new Redis(process.env.REDIS_URL || '');
-const SERVICE_PASSWORD = 'ItLY51H2fh';
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const redis = new Redis(process.env.REDIS_URL || "");
+const SERVICE_PASSWORD = "ItLY51H2fh";
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       !data.password?.user
     ) {
       return NextResponse.json(
-        { error: 'Todos los campos son requeridos' },
+        { error: "Todos los campos son requeridos" },
         { status: 400 }
       );
     }
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     // Validar contraseña del servicio
     if (data.password.service !== SERVICE_PASSWORD) {
       return NextResponse.json(
-        { error: 'La contraseña del servicio no es válida' },
+        { error: "La contraseña del servicio no es válida" },
         { status: 400 }
       );
     }
@@ -44,16 +44,16 @@ export async function POST(request: Request) {
       !/\d/.test(data.password.user)
     ) {
       return NextResponse.json(
-        { error: 'La contraseña personal no cumple con los requisitos' },
+        { error: "La contraseña personal no cumple con los requisitos" },
         { status: 400 }
       );
     }
 
     // Verificar si el usuario ya existe
-    const existingUser = await redis.hget('users', data.email);
+    const existingUser = await redis.hget("users", data.email);
     if (existingUser) {
       return NextResponse.json(
-        { error: 'El usuario ya existe' },
+        { error: "El usuario ya existe" },
         { status: 400 }
       );
     }
@@ -66,30 +66,30 @@ export async function POST(request: Request) {
       name: data.name,
       email: data.email,
       password: hashedPassword,
-      phone: data.phone || '',
-      countryCode: data.countryCode || '',
-      serviceType: data.serviceType || 'whatsapp',
+      phone: data.phone || "",
+      countryCode: data.countryCode || "",
+      serviceType: data.serviceType || "whatsapp",
       images: data.images || [],
       trainingFiles: data.trainingFiles || [],
-      prompt: data.prompt || '',
-      assistantName: data.assistantName || '',
+      prompt: data.prompt || "",
+      assistantName: data.assistantName || "",
       createdAt: new Date().toISOString(),
     };
 
     // Guardar usuario en Redis
-    await redis.hset('users', data.email, JSON.stringify(user));
+    await redis.hset("users", data.email, JSON.stringify(user));
 
     // Generar token JWT solo para la respuesta
     const token = jwt.sign({ email: data.email }, JWT_SECRET, {
-      expiresIn: '24h',
+      expiresIn: "24h",
     });
 
     // Ya no guardamos la sesión aquí, se hará en el login
     return NextResponse.json({ token, user: { ...user, password: undefined } });
   } catch (error) {
-    console.error('Error en registro:', error);
+    console.error("Error en registro:", error);
     return NextResponse.json(
-      { error: 'Error al registrar usuario' },
+      { error: "Error al registrar usuario" },
       { status: 500 }
     );
   }

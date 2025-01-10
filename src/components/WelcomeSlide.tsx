@@ -1,22 +1,17 @@
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
-import { Bot, LogIn, Sparkles, UserPlus } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { Bot, LogIn, Sparkles, UserPlus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-interface WelcomeSlideProps {
-  onGetStarted: () => void;
-  onLogin: () => void;
-}
-
-export function WelcomeSlide({ onGetStarted, onLogin }: WelcomeSlideProps) {
+export function WelcomeSlide() {
   const router = useRouter();
 
   // Efecto para verificar si el usuario está autenticado
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     }
   }, [router]);
 
@@ -35,7 +30,7 @@ export function WelcomeSlide({ onGetStarted, onLogin }: WelcomeSlideProps) {
 
       <div className="w-full grid grid-cols-2 gap-4 mb-8">
         <Button
-          onClick={() => router.push('/auth')}
+          onClick={() => router.push("/auth")}
           size="lg"
           className="w-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-2"
         >
@@ -43,7 +38,7 @@ export function WelcomeSlide({ onGetStarted, onLogin }: WelcomeSlideProps) {
           Registro
         </Button>
         <Button
-          onClick={() => router.push('/auth?mode=login')}
+          onClick={() => router.push("/auth?mode=login")}
           variant="outline"
           size="lg"
           className="w-full border-purple-600 text-purple-600 hover:bg-purple-50 flex items-center justify-center gap-2"

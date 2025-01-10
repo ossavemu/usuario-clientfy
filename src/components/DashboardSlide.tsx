@@ -1,6 +1,6 @@
-import { Card } from '@/components/ui/card';
-import { countries } from '@/constants/countries';
-import { motion } from 'framer-motion';
+import { Card } from "@/components/ui/card";
+import { countries } from "@/constants/countries";
+import { motion } from "framer-motion";
 import {
   Bot,
   FileText,
@@ -12,9 +12,9 @@ import {
   Phone,
   Rocket,
   Sparkles,
-} from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { type RegistrationData } from '../types/registration';
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { type RegistrationData } from "../types/registration";
 
 interface DashboardSlideProps {
   data: RegistrationData;
@@ -28,7 +28,7 @@ interface StepCardProps {
   icon: React.ReactNode;
   title: string;
   description: string;
-  status: 'completed' | 'pending' | 'optional' | 'special';
+  status: "completed" | "pending" | "optional" | "special";
   onClick: () => void;
   delay: number;
   isLast?: boolean;
@@ -37,7 +37,7 @@ interface StepCardProps {
 function StepCard({
   icon,
   title,
-  description,
+  description = "",
   status,
   onClick,
   delay,
@@ -45,20 +45,20 @@ function StepCard({
 }: StepCardProps) {
   const getStatusStyles = () => {
     switch (status) {
-      case 'completed':
-        return 'bg-green-50 border-green-200 hover:border-green-300';
-      case 'pending':
-        return 'bg-yellow-50 border-yellow-200 hover:border-yellow-300';
-      case 'optional':
-        return 'bg-purple-50/50 border-purple-200 hover:border-purple-300';
-      case 'special':
-        return 'bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800';
+      case "completed":
+        return "bg-green-50 border-green-200 hover:border-green-300";
+      case "pending":
+        return "bg-yellow-50 border-yellow-200 hover:border-yellow-300";
+      case "optional":
+        return "bg-purple-50/50 border-purple-200 hover:border-purple-300";
+      case "special":
+        return "bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800";
     }
   };
 
   const getStatusIcon = () => {
     switch (status) {
-      case 'completed':
+      case "completed":
         return (
           <div className="absolute top-2 right-2">
             <svg
@@ -74,7 +74,7 @@ function StepCard({
             </svg>
           </div>
         );
-      case 'optional':
+      case "optional":
         return (
           <div className="absolute top-2 right-2">
             <Sparkles className="h-5 w-5 text-purple-500" />
@@ -100,12 +100,12 @@ function StepCard({
           <div className="flex items-center space-x-3">
             <div
               className={`rounded-full p-1.5 ${
-                status === 'special' ? 'bg-white/20' : 'bg-white/80'
+                status === "special" ? "bg-white/20" : "bg-white/80"
               }`}
             >
               <div
                 className={
-                  status === 'special' ? 'text-white' : 'text-purple-600'
+                  status === "special" ? "text-white" : "text-purple-600"
                 }
               >
                 {icon}
@@ -114,10 +114,10 @@ function StepCard({
             <div>
               <h3
                 className={`font-medium ${
-                  status === 'special' ? 'text-white' : ''
+                  status === "special" ? "text-white" : ""
                 }`}
               >
-                {title}
+                {title} {description}
               </h3>
             </div>
           </div>
@@ -132,9 +132,9 @@ function StepCard({
 
 const capitalizeWords = (name: string) => {
   return name
-    .split(' ')
+    .split(" ")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+    .join(" ");
 };
 
 export function DashboardSlide({
@@ -170,7 +170,7 @@ export function DashboardSlide({
           const phoneNumber =
             `${phoneData.phone.countryCode}${phoneData.phone.phone}`.replace(
               /\+/g,
-              ''
+              ""
             );
           const promptResponse = await fetch(
             `/api/prompt?phoneNumber=${phoneNumber}`
@@ -186,7 +186,7 @@ export function DashboardSlide({
           setCanCreateBot(Boolean(phoneData.phone && promptData?.prompt));
         }
       } catch (error) {
-        console.error('Error al verificar datos del bot:', error);
+        console.error("Error al verificar datos del bot:", error);
       } finally {
         setIsVerifyingBot(false);
       }
@@ -200,21 +200,21 @@ export function DashboardSlide({
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) {
       return {
-        text: '¡Buenos días',
-        color: 'text-amber-500',
-        emoji: '🌅',
+        text: "¡Buenos días",
+        color: "text-amber-500",
+        emoji: "🌅",
       };
     } else if (hour >= 12 && hour < 19) {
       return {
-        text: '¡Buenas tardes',
-        color: 'text-fuchsia-600',
-        emoji: '🌤️',
+        text: "¡Buenas tardes",
+        color: "text-fuchsia-600",
+        emoji: "🌤️",
       };
     } else {
       return {
-        text: '¡Buenas noches',
-        color: 'text-blue-600',
-        emoji: '🌙',
+        text: "¡Buenas noches",
+        color: "text-blue-600",
+        emoji: "🌙",
       };
     }
   };
@@ -231,7 +231,7 @@ export function DashboardSlide({
 
   // Log para verificar los estados calculados
   useEffect(() => {
-    console.log('Estados calculados:', {
+    console.log("Estados calculados:", {
       hasPhone,
       hasPrompt,
       hasImages,
@@ -270,7 +270,7 @@ export function DashboardSlide({
             <span>, {capitalizeWords(data.name)}</span>
           ) : (
             (() => {
-              console.log('No hay nombre disponible:', data);
+              console.log("No hay nombre disponible:", data);
               return null;
             })()
           )}
@@ -290,7 +290,7 @@ export function DashboardSlide({
             <span className="text-gray-600">País:</span>
             <span className="font-medium">
               {countries.find((c) => c.value === data.countryCode)?.label ||
-                'Desconocido'}
+                "Desconocido"}
             </span>
           </div>
         )}
@@ -313,7 +313,7 @@ export function DashboardSlide({
           icon={<Phone className="w-5 h-5" />}
           title="Registro de Celular"
           description=""
-          status={hasPhone ? 'completed' : 'pending'}
+          status={hasPhone ? "completed" : "pending"}
           onClick={() => onNavigate(1)}
           delay={0.3}
         />
@@ -322,7 +322,7 @@ export function DashboardSlide({
           icon={<Bot className="w-5 h-5" />}
           title="Configura tu Asistente"
           description=""
-          status={hasPrompt ? 'completed' : 'pending'}
+          status={hasPrompt ? "completed" : "pending"}
           onClick={() => onNavigate(2)}
           delay={0.4}
         />
@@ -331,7 +331,7 @@ export function DashboardSlide({
           icon={<ImageIcon className="w-5 h-5" />}
           title="Imágenes del Asistente"
           description=""
-          status={hasImages ? 'completed' : 'optional'}
+          status={hasImages ? "completed" : "optional"}
           onClick={() => onNavigate(3)}
           delay={0.5}
         />
@@ -340,7 +340,7 @@ export function DashboardSlide({
           icon={<FileText className="w-5 h-5" />}
           title="Archivos de Entrenamiento"
           description=""
-          status={hasTrainingFiles ? 'completed' : 'optional'}
+          status={hasTrainingFiles ? "completed" : "optional"}
           onClick={() => onNavigate(4)}
           delay={0.6}
         />
@@ -355,14 +355,14 @@ export function DashboardSlide({
           }
           title={
             isVerifyingBot
-              ? 'Verificando información...'
+              ? "Verificando información..."
               : canCreateBot
-              ? '¡Crear tu Asistente Ahora!'
-              : 'Crear Asistente (Completa los pasos requeridos)'
+              ? "¡Crear tu Asistente Ahora!"
+              : "Crear Asistente (Completa los pasos requeridos)"
           }
           description=""
           status={
-            isVerifyingBot ? 'pending' : canCreateBot ? 'special' : 'pending'
+            isVerifyingBot ? "pending" : canCreateBot ? "special" : "pending"
           }
           onClick={() => {
             if (!isVerifyingBot && canCreateBot) {
