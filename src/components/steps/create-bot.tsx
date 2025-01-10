@@ -198,10 +198,11 @@ export function CreateBotStep() {
                   <Users className="w-5 h-5 text-purple-600" />
                   <div className="text-left">
                     <Label htmlFor="auto-invite" className="font-medium">
-                      Invitación Automática
+                      Seguimiento Automático
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Invita automáticamente a clientes potenciales
+                      Dale seguimiento a tus clientes potenciales
+                      automáticamente
                     </p>
                   </div>
                 </div>
