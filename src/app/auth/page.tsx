@@ -7,7 +7,7 @@ import { type RegistrationData } from "@/types/registration";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function AuthPage() {
+function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isLogin = searchParams.get("mode") === "login";
@@ -41,18 +41,24 @@ export default function AuthPage() {
 
   return (
     <div className="w-full h-full flex items-center justify-center p-4">
-      <Suspense fallback={<div>Cargando...</div>}>
-        <Card className="w-full max-w-[500px]">
-          <CardContent className="p-6">
-            <UserInfoStep
-              data={formData}
-              onUpdate={handleUpdate}
-              onNext={handleNext}
-              defaultMode={isLogin ? "login" : "register"}
-            />
-          </CardContent>
-        </Card>
-      </Suspense>
+      <Card className="w-full max-w-[500px]">
+        <CardContent className="p-6">
+          <UserInfoStep
+            data={formData}
+            onUpdate={handleUpdate}
+            onNext={handleNext}
+            defaultMode={isLogin ? "login" : "register"}
+          />
+        </CardContent>
+      </Card>
     </div>
+  );
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <AuthContent />
+    </Suspense>
   );
 }
