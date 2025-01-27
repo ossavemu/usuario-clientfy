@@ -47,15 +47,11 @@ export default function RootLayout({
             .animated-gradient {
               background: linear-gradient(
                 -45deg,
-                #420075 0%,   /* Morado Oscuro Base */
-                #7954A1 20%,  /* Violeta Medio-Oscuro */
-                #7954A1 35%,  /* Violeta Medio-Oscuro */
-                #8F00FF 45%,  /* Violeta Brillante (reducido) */
-                #A32EFF 50%,  /* Violeta Medio */
-                #8F00FF 55%,  /* Violeta Brillante (reducido) */
-                #7954A1 65%,  /* Violeta Medio-Oscuro */
-                #7954A1 80%,  /* Violeta Medio-Oscuro */
-                #420075 100%  /* Morado Oscuro Base */
+                #7500D1 0%,    /* Violeta Vibrante 1 */
+                #8F00FF 25%,   /* Violeta Brillante */
+                #5C00A3 50%,   /* Violeta Vibrante 2 */
+                #8F00FF 75%,   /* Violeta Brillante */
+                #7500D1 100%    /* Violeta Vibrante 1 */
               );
               background-size: 300% 300%;
               animation: gradientAnimation 20s ease-in-out infinite;
