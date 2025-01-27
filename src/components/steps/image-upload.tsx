@@ -1,11 +1,12 @@
-import { Button } from "@/components/ui/button";
-import { ConfirmDeleteModal } from "@/components/ui/confirm-delete-modal";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { StepNavigation } from "@/components/ui/step-navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { type RegistrationData } from "../../types/registration";
+import { Button } from '@/components/ui/button';
+import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { StepNavigation } from '@/components/ui/step-navigation';
+import { type RegistrationData } from '@/types/registration';
+import Image from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 interface ImageUploadStepProps {
   data: RegistrationData;
@@ -26,14 +27,14 @@ const TARGET_QUALITY = 0.7;
 
 async function optimizeImage(file: File): Promise<Blob> {
   return new Promise((resolve) => {
-    const img = new Image();
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d")!;
+    const imgElement = new window.Image();
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d')!;
 
-    img.onload = () => {
+    imgElement.onload = () => {
       // Calcular dimensiones manteniendo la relación de aspecto
-      let width = img.width;
-      let height = img.height;
+      let width = imgElement.width;
+      let height = imgElement.height;
 
       if (width > height && width > MAX_DIMENSION) {
         height = (height * MAX_DIMENSION) / width;
@@ -46,7 +47,7 @@ async function optimizeImage(file: File): Promise<Blob> {
       canvas.width = width;
       canvas.height = height;
 
-      ctx.drawImage(img, 0, 0, width, height);
+      ctx.drawImage(imgElement, 0, 0, width, height);
 
       // Convertir a JPEG con compresión
       canvas.toBlob(
@@ -55,12 +56,12 @@ async function optimizeImage(file: File): Promise<Blob> {
             resolve(blob);
           }
         },
-        "image/jpeg",
+        'image/jpeg',
         TARGET_QUALITY
       );
     };
 
-    img.src = URL.createObjectURL(file);
+    imgElement.src = URL.createObjectURL(file);
   });
 }
 
@@ -72,45 +73,42 @@ export function ImageUploadStep({
 }: ImageUploadStepProps) {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [uploadedImages, setUploadedImages] = useState<
     Array<{ name: string; url: string }>
   >([]);
   const [deleteModal, setDeleteModal] = useState<{
     isOpen: boolean;
     imageName: string;
-  }>({ isOpen: false, imageName: "" });
+  }>({ isOpen: false, imageName: '' });
 
-  // Cargar imágenes existentes al montar el componente
-  useEffect(() => {
-    const loadExistingImages = async () => {
-      if (data.countryCode && data.phone) {
-        setIsLoading(true);
-        try {
-          const phoneNumber = `${data.countryCode}${data.phone}`.replace(
-            /\+/g,
-            ""
-          );
-          const response = await fetch(
-            `/api/images?phoneNumber=${phoneNumber}`
-          );
-          const result = await response.json();
+  const loadExistingImages = useCallback(async () => {
+    if (data.countryCode && data.phone) {
+      setIsLoading(true);
+      try {
+        const phoneNumber = `${data.countryCode}${data.phone}`.replace(
+          /\+/g,
+          ''
+        );
+        const response = await fetch(`/api/images?phoneNumber=${phoneNumber}`);
+        const result = await response.json();
 
-          if (result.success && result.images) {
-            setUploadedImages(result.images);
-            onUpdate({ images: result.images });
-          }
-        } catch (error) {
-          console.error("Error al cargar imágenes existentes:", error);
-          setError("Error al cargar imágenes existentes");
-        } finally {
-          setIsLoading(false);
+        if (result.success && result.images) {
+          setUploadedImages(result.images);
+          onUpdate({ images: result.images });
         }
+      } catch (error) {
+        console.error('Error al cargar imágenes existentes:', error);
+        setError('Error al cargar imágenes existentes');
+      } finally {
+        setIsLoading(false);
       }
-    };
-
-    loadExistingImages();
+    }
   }, [data.countryCode, data.phone, onUpdate]);
+
+  useEffect(() => {
+    loadExistingImages();
+  }, [loadExistingImages]);
 
   useEffect(() => {
     return () => {
@@ -126,19 +124,19 @@ export function ImageUploadStep({
           Array.from(e.target.files).map(async (file) => {
             const optimizedBlob = await optimizeImage(file);
             const optimizedFile = new File([optimizedBlob], file.name, {
-              type: "image/jpeg",
+              type: 'image/jpeg',
             });
             return {
               file: optimizedFile,
-              name: file.name.replace(/\.[^/.]+$/, ""),
+              name: file.name.replace(/\.[^/.]+$/, ''),
               preview: URL.createObjectURL(optimizedFile),
             };
           })
         );
         setImages((prev) => [...prev, ...optimizedFiles]);
       } catch (error) {
-        console.error("Error al optimizar imágenes:", error);
-        setError("Error al procesar las imágenes");
+        console.error('Error al optimizar imágenes:', error);
+        setError('Error al procesar las imágenes');
       } finally {
         setIsLoading(false);
       }
@@ -175,10 +173,10 @@ export function ImageUploadStep({
 
     setIsLoading(true);
     try {
-      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, "");
+      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
       const response = await fetch(
         `/api/files/delete?phoneNumber=${phoneNumber}&fileName=${imageName}&type=image`,
-        { method: "DELETE" }
+        { method: 'DELETE' }
       );
 
       const result = await response.json();
@@ -189,13 +187,13 @@ export function ImageUploadStep({
         );
         setUploadedImages(newImages);
         onUpdate({ images: newImages });
-        toast.success("Imagen eliminada exitosamente");
+        toast.success('Imagen eliminada exitosamente');
       } else {
         throw new Error(result.error);
       }
     } catch (error) {
-      console.error("Error al eliminar imagen:", error);
-      toast.error("Error al eliminar la imagen");
+      console.error('Error al eliminar imagen:', error);
+      toast.error('Error al eliminar la imagen');
     } finally {
       setIsLoading(false);
     }
@@ -203,31 +201,31 @@ export function ImageUploadStep({
 
   const handleUpload = async () => {
     if (!images.length) {
-      setError("Por favor, selecciona al menos una imagen");
+      setError('Por favor, selecciona al menos una imagen');
       return;
     }
 
     if (images.some((img) => !img.name.trim())) {
-      setError("Por favor, asigna un nombre a todas las imágenes");
+      setError('Por favor, asigna un nombre a todas las imágenes');
       return;
     }
 
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const formData = new FormData();
       images.forEach((img) => {
-        formData.append("files", img.file);
-        formData.append("names", img.name.trim());
+        formData.append('files', img.file);
+        formData.append('names', img.name.trim());
       });
       formData.append(
-        "phoneNumber",
-        `${data.countryCode}${data.phone}`.replace(/\+/g, "")
+        'phoneNumber',
+        `${data.countryCode}${data.phone}`.replace(/\+/g, '')
       );
 
-      const response = await fetch("/api/images", {
-        method: "POST",
+      const response = await fetch('/api/images', {
+        method: 'POST',
         body: formData,
       });
 
@@ -242,13 +240,13 @@ export function ImageUploadStep({
         setUploadedImages([...uploadedImages, ...newImages]);
         onUpdate({ images: [...uploadedImages, ...newImages] });
         setImages([]); // Limpiar imágenes pendientes
-        setError("");
+        setError('');
       } else {
-        setError(result.error || "Error al subir las imágenes");
+        setError(result.error || 'Error al subir las imágenes');
       }
     } catch (error) {
-      console.error("Error al subir imágenes:", error);
-      setError("Error al subir las imágenes");
+      console.error('Error al subir imágenes:', error);
+      setError('Error al subir las imágenes');
     } finally {
       setIsLoading(false);
     }
@@ -282,11 +280,15 @@ export function ImageUploadStep({
                   key={`uploaded-${index}`}
                   className="flex items-center gap-4 p-4 border rounded-lg bg-gray-50"
                 >
-                  <img
-                    src={image.url}
-                    alt={image.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
+                  <div className="relative w-16 h-16">
+                    <Image
+                      src={image.url}
+                      alt={image.name}
+                      fill
+                      sizes="64px"
+                      className="object-cover rounded"
+                    />
+                  </div>
                   <div className="flex-1">
                     <Input
                       value={image.name}
@@ -350,11 +352,15 @@ export function ImageUploadStep({
                   key={index}
                   className="flex items-center gap-4 p-4 border rounded-lg"
                 >
-                  <img
-                    src={image.preview}
-                    alt={image.name}
-                    className="w-16 h-16 object-cover rounded"
-                  />
+                  <div className="relative w-16 h-16">
+                    <Image
+                      src={image.preview}
+                      alt={image.name}
+                      fill
+                      sizes="64px"
+                      className="object-cover rounded"
+                    />
+                  </div>
                   <div className="flex-1">
                     <Input
                       value={image.name}
@@ -394,7 +400,7 @@ export function ImageUploadStep({
             className="w-full"
             disabled={isLoading}
           >
-            {isLoading ? "Subiendo..." : "Subir Imágenes"}
+            {isLoading ? 'Subiendo...' : 'Subir Imágenes'}
           </Button>
         )}
 
@@ -410,7 +416,7 @@ export function ImageUploadStep({
 
       <ConfirmDeleteModal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, imageName: "" })}
+        onClose={() => setDeleteModal({ isOpen: false, imageName: '' })}
         onConfirm={confirmDelete}
         title="Eliminar Imagen"
         message="¿Estás seguro de que deseas eliminar esta imagen? Esta acción no se puede deshacer."

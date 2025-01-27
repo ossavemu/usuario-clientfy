@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { jwtDecode } from "jwt-decode";
-import { Home, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Button } from '@/components/ui/button';
+import { jwtDecode } from 'jwt-decode';
+import { Home, LogOut } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 interface AuthProviderProps {
   children?: React.ReactNode;
@@ -17,27 +17,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const validateSession = useCallback(async (token: string) => {
     try {
-      const response = await fetch("/api/auth/validate", {
+      const response = await fetch('/api/auth/validate', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
       if (!response.ok) {
-        throw new Error("Sesión inválida");
+        throw new Error('Sesión inválida');
       }
 
       const data = await response.json();
       return data.valid;
     } catch (error) {
-      console.error("Error validando sesión:", error);
+      console.error('Error validando sesión:', error);
       return false;
     }
   }, []);
 
   const checkAuth = useCallback(async () => {
     setIsLoading(true);
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
 
     if (!token) {
       setIsAuthenticated(false);
@@ -48,19 +48,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       const isValid = await validateSession(token);
       if (!isValid) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         setIsAuthenticated(false);
-        router.replace("/");
+        router.replace('/');
       } else {
         setIsAuthenticated(true);
       }
     } catch (error) {
-      console.error("Error validando token:", error);
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      console.error('Error validando token:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
       setIsAuthenticated(false);
-      router.replace("/");
+      router.replace('/');
     } finally {
       setIsLoading(false);
     }
@@ -71,54 +71,54 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Observar cambios en localStorage
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === "token") {
+      if (e.key === 'token') {
         checkAuth();
       }
     };
 
-    window.addEventListener("storage", handleStorageChange);
+    window.addEventListener('storage', handleStorageChange);
 
     // Crear un observador para cambios en localStorage dentro de la misma ventana
     const interval = setInterval(() => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem('token');
       if (token && !isAuthenticated) {
         checkAuth();
       } else if (!token && isAuthenticated) {
         setIsAuthenticated(false);
-        router.replace("/");
+        router.replace('/');
       }
     }, 1000);
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
       clearInterval(interval);
     };
   }, [checkAuth, isAuthenticated, router]);
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (token) {
       try {
         const decoded = jwtDecode<{ email: string }>(token);
-        await fetch("/api/auth/logout", {
-          method: "POST",
+        await fetch('/api/auth/logout', {
+          method: 'POST',
           headers: {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ email: decoded.email }),
         });
       } catch (error) {
-        console.error("Error al cerrar sesión:", error);
+        console.error('Error al cerrar sesión:', error);
       }
     }
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setIsAuthenticated(false);
-    router.push("/");
+    router.push('/');
   };
 
   const handleGoHome = () => {
-    window.location.href = "/dashboard";
+    window.location.href = '/dashboard';
   };
 
   if (isLoading) {

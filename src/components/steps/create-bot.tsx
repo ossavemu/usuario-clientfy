@@ -1,13 +1,14 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { motion } from "framer-motion";
-import { Bot, Calendar, QrCode, Users } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { motion } from 'framer-motion';
+import { Bot, Calendar, QrCode, Users } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
+/*
 interface InstanceInfo {
   instanceName: string;
   ip: string;
@@ -17,6 +18,7 @@ interface InstanceInfo {
   numberphone: string;
   dropletId: number;
 }
+*/
 
 interface CreateBotStepProps {
   phoneNumber: string;
@@ -25,7 +27,7 @@ interface CreateBotStepProps {
 export function CreateBotStep({ phoneNumber }: CreateBotStepProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState<string>("Creando el bot...");
+  const [message, setMessage] = useState<string>('Creando el bot...');
   const [enableAppointments, setEnableAppointments] = useState(false);
   const [enableAutoInvite, setEnableAutoInvite] = useState(false);
 
@@ -39,23 +41,23 @@ export function CreateBotStep({ phoneNumber }: CreateBotStepProps) {
           const response = await fetch(
             `http://localhost:3001/api/instance/status/57${phoneNumber}`,
             {
-              method: "GET",
+              method: 'GET',
               headers: {
-                "x-api-key": "2rgIgH4GXmVzRsr8juvS3dDTxr3",
+                'x-api-key': '2rgIgH4GXmVzRsr8juvS3dDTxr3',
               },
             }
           );
           const data = await response.json();
-          console.log("Estado actual:", data);
-          
+          console.log('Estado actual:', data);
+
           intentos++;
           if (intentos >= maxIntentos) {
-            console.log("Se alcanzó el máximo de intentos de verificación");
+            console.log('Se alcanzó el máximo de intentos de verificación');
             clearInterval(pollInterval);
             setIsCreating(false);
           }
         } catch (error) {
-          console.error("Error al verificar estado:", error);
+          console.error('Error al verificar estado:', error);
           // Continuamos el polling a pesar del error
         }
       }, 20000);
@@ -71,35 +73,35 @@ export function CreateBotStep({ phoneNumber }: CreateBotStepProps) {
     enableAutoInvite: boolean;
   }) => {
     try {
-      console.log("Enviando solicitud con:", requestBody);
+      console.log('Enviando solicitud con:', requestBody);
 
       const response = await fetch(
-        "http://localhost:3001/api/instance/create",
+        'http://localhost:3001/api/instance/create',
         {
-          method: "POST",
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "x-api-key": "2rgIgH4GXmVzRsr8juvS3dDTxr3",
+            'Content-Type': 'application/json',
+            'x-api-key': '2rgIgH4GXmVzRsr8juvS3dDTxr3',
           },
           body: JSON.stringify({
             ...requestBody,
             numberphone: `57${requestBody.numberphone}`,
-            provider: "baileys",
+            provider: 'baileys',
           }),
         }
       );
 
       const data = await response.json();
-      console.log("Respuesta del servidor:", data);
+      console.log('Respuesta del servidor:', data);
     } catch (error) {
-      console.error("Error al crear la instancia:", error);
+      console.error('Error al crear la instancia:', error);
     }
   };
 
   const handleCreateBot = () => {
     setIsCreating(true);
     setProgress(0);
-    setMessage("Iniciando creación del asistente inteligente...");
+    setMessage('Iniciando creación del asistente inteligente...');
 
     const requestBody = {
       numberphone: phoneNumber,
@@ -198,22 +200,22 @@ export function CreateBotStep({ phoneNumber }: CreateBotStepProps) {
                 animate={{
                   strokeDashoffset: [2 * Math.PI * 45, 0],
                   stroke: [
-                    "#FF6B6B",
-                    "#4ECDC4",
-                    "#45B7D1",
-                    "#FFA07A",
-                    "#98D8C8",
+                    '#FF6B6B',
+                    '#4ECDC4',
+                    '#45B7D1',
+                    '#FFA07A',
+                    '#98D8C8',
                   ],
                 }}
                 transition={{
                   strokeDashoffset: {
                     duration: 180,
-                    ease: "linear",
+                    ease: 'linear',
                   },
                   stroke: {
                     duration: 3,
                     repeat: Infinity,
-                    ease: "linear",
+                    ease: 'linear',
                   },
                 }}
               />
@@ -235,5 +237,5 @@ export function CreateBotStep({ phoneNumber }: CreateBotStepProps) {
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, "0")}`;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };

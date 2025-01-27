@@ -1,33 +1,32 @@
-"use client";
+'use client';
 
-import React, { Suspense } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { UserInfoStep } from "@/components/AuthSlide";
-import { type RegistrationData } from "@/types/registration";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { UserInfoStep } from '@/components/AuthSlide';
+import { Card, CardContent } from '@/components/ui/card';
+import { type RegistrationData } from '@/types/registration';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 
 function AuthContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const isLogin = searchParams.get("mode") === "login";
+  const isLogin = searchParams.get('mode') === 'login';
   const [formData, setFormData] = useState<RegistrationData>({
-    name: "",
-    email: "",
-    password: "",
-    phone: "",
-    countryCode: "",
-    serviceType: "qr",
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    countryCode: '',
+    serviceType: 'qr',
     images: [],
     trainingFiles: [],
-    prompt: "",
-    assistantName: "",
+    prompt: '',
+    assistantName: '',
   });
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (token) {
-      router.push("/dashboard");
+      router.push('/dashboard');
     }
   }, [router]);
 
@@ -36,7 +35,7 @@ function AuthContent() {
   };
 
   const handleNext = () => {
-    router.push("/dashboard");
+    router.push('/dashboard');
   };
 
   return (
@@ -47,7 +46,7 @@ function AuthContent() {
             data={formData}
             onUpdate={handleUpdate}
             onNext={handleNext}
-            defaultMode={isLogin ? "login" : "register"}
+            defaultMode={isLogin ? 'login' : 'register'}
           />
         </CardContent>
       </Card>

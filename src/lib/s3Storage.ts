@@ -5,8 +5,8 @@ import {
   PutObjectCommand,
   S3Client,
   type _Object,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+} from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
@@ -23,11 +23,11 @@ export async function uploadFile(
   buffer: Buffer,
   fileName: string,
   phoneNumber: string,
-  type: "image" | "training" | "prompt" = "image"
+  type: 'image' | 'training' | 'prompt' = 'image'
 ) {
   try {
-    if (type === "training" && buffer.length > MAX_FILE_SIZE) {
-      throw new Error("El archivo excede el tamaño máximo permitido de 6MB");
+    if (type === 'training' && buffer.length > MAX_FILE_SIZE) {
+      throw new Error('El archivo excede el tamaño máximo permitido de 6MB');
     }
 
     const key = `${phoneNumber}/${type}/${fileName}`;
@@ -52,14 +52,14 @@ export async function uploadFile(
 
     return { success: true, url };
   } catch (error) {
-    console.error("Error uploading to S3:", error);
+    console.error('Error uploading to S3:', error);
     throw error;
   }
 }
 
 export async function getUserFiles(
   phoneNumber: string,
-  type: "image" | "training" | "prompt" = "image"
+  type: 'image' | 'training' | 'prompt' = 'image'
 ) {
   try {
     const files = await s3Client.send(
@@ -75,7 +75,7 @@ export async function getUserFiles(
 
     const filesWithUrls = await Promise.all(
       files.Contents.map(async (file: _Object) => {
-        const name = file.Key!.split("/").pop()!;
+        const name = file.Key!.split('/').pop()!;
         const url = await getSignedUrl(
           s3Client,
           new GetObjectCommand({
@@ -90,7 +90,7 @@ export async function getUserFiles(
 
     return { success: true, files: filesWithUrls };
   } catch (error) {
-    console.error("Error getting files from S3:", error);
+    console.error('Error getting files from S3:', error);
     throw error;
   }
 }
@@ -98,7 +98,7 @@ export async function getUserFiles(
 export async function deleteFile(
   phoneNumber: string,
   fileName: string,
-  type: "image" | "training" | "prompt" = "image"
+  type: 'image' | 'training' | 'prompt' = 'image'
 ) {
   try {
     const key = `${phoneNumber}/${type}/${fileName}`;
@@ -112,7 +112,7 @@ export async function deleteFile(
 
     return { success: true };
   } catch (error) {
-    console.error("Error deleting from S3:", error);
+    console.error('Error deleting from S3:', error);
     throw error;
   }
 }

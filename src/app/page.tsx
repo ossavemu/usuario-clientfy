@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { Card, CardContent } from "@/components/ui/card";
-import { WelcomeSlide } from "@/components/WelcomeSlide";
-import { useEffect } from "react";
+import { Card, CardContent } from '@/components/ui/card';
+import { WelcomeSlide } from '@/components/WelcomeSlide';
+import { useEffect } from 'react';
 
 export default function Home() {
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const isLoginAttempt = window.location.hash.includes("user-info");
+    const token = localStorage.getItem('token');
+    const isLoginAttempt = window.location.hash.includes('user-info');
 
     // Solo redirigir al dashboard si hay token y no es un intento de login
     if (token && !isLoginAttempt) {
-      window.location.href = "/dashboard";
+      window.location.href = '/dashboard';
     }
   }, []);
 

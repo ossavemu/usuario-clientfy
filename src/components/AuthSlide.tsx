@@ -1,48 +1,48 @@
-"use client";
+'use client';
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { SuccessModal } from "@/components/ui/success-modal";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { type RegistrationData } from "@/types/registration";
-import { AnimatePresence, motion } from "framer-motion";
-import { Check, Eye, EyeOff, X } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { SuccessModal } from '@/components/ui/success-modal';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { validateServicePassword } from '@/lib/passwordService';
+import { type RegistrationData } from '@/types/registration';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Check, Eye, EyeOff, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface UserInfoStepProps {
   data: RegistrationData;
   onUpdate: (data: Partial<RegistrationData>) => void;
   onNext: () => void;
-  defaultMode?: "login" | "register";
+  defaultMode?: 'login' | 'register';
 }
-
-const SERVICE_PASSWORD = "ItLY51H2fh";
 
 export function UserInfoStep({
   data,
   onUpdate,
-  defaultMode = "register",
+  defaultMode = 'register',
 }: UserInfoStepProps) {
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [showServicePassword, setShowServicePassword] = useState(false);
   const [showUserPassword, setShowUserPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(defaultMode === "login");
-  const [servicePassword, setServicePassword] = useState("");
-  const [userPassword, setUserPassword] = useState("");
+  const [isLogin, setIsLogin] = useState(defaultMode === 'login');
+  const [servicePassword, setServicePassword] = useState('');
+  const [userPassword, setUserPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
 
   // Actualizar el hash cuando cambia la pestaña
   const handleTabChange = (value: string) => {
-    const newIsLogin = value === "login";
+    const newIsLogin = value === 'login';
     setIsLogin(newIsLogin);
-    setError("");
-    setUserPassword("");
-    setServicePassword("");
-    router.push(`/auth${newIsLogin ? "?mode=login" : ""}`);
+    setError('');
+    setUserPassword('');
+    setServicePassword('');
+    router.push(`/auth${newIsLogin ? '?mode=login' : ''}`);
   };
 
   const validatePassword = (password: string) => {
@@ -61,29 +61,46 @@ export function UserInfoStep({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setIsLoading(true);
 
     try {
       if (!isLogin) {
         // Validaciones de registro
         if (!data.name || !data.email || !servicePassword || !userPassword) {
-          throw new Error("Todos los campos son requeridos");
+          toast.error('Todos los campos son requeridos');
+          throw new Error('Todos los campos son requeridos');
         }
 
         if (!passwordValidation.isValid) {
-          throw new Error("La contraseña no cumple con los requisitos mínimos");
+          toast.error('La contraseña no cumple con los requisitos mínimos');
+          throw new Error('La contraseña no cumple con los requisitos mínimos');
         }
 
-        if (servicePassword !== SERVICE_PASSWORD) {
-          throw new Error("La contraseña del servicio no es válida");
+        // Validar contraseña del servicio
+        const validationResult = await validateServicePassword(
+          data.email,
+          servicePassword
+        );
+
+        console.log('Resultado de validación:', validationResult); // Para depuración
+
+        if (!validationResult.success) {
+          const errorMessage = validationResult.message;
+          toast.error(errorMessage);
+          throw new Error(errorMessage);
+        }
+
+        if (!validationResult.isValid) {
+          toast.error('La contraseña del servicio es incorrecta');
+          throw new Error('La contraseña del servicio es incorrecta');
         }
 
         // Realizar el registro
-        const response = await fetch("/api/register", {
-          method: "POST",
+        const response = await fetch('/api/register', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             name: data.name,
@@ -98,21 +115,23 @@ export function UserInfoStep({
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error || "Error en el registro");
+          toast.error(result.error || 'Error en el registro');
+          throw new Error(result.error || 'Error en el registro');
         }
 
-        // Solo mostrar el modal de éxito
+        toast.success('Registro exitoso');
         setShowSuccessModal(true);
       } else {
         // Login
         if (!data.email || !userPassword) {
-          throw new Error("Email y contraseña son requeridos");
+          toast.error('Email y contraseña son requeridos');
+          throw new Error('Email y contraseña son requeridos');
         }
 
-        const response = await fetch("/api/login", {
-          method: "POST",
+        const response = await fetch('/api/login', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             email: data.email,
@@ -123,33 +142,33 @@ export function UserInfoStep({
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.error || "Credenciales incorrectas");
+          toast.error(result.error || 'Credenciales incorrectas');
+          throw new Error(result.error || 'Credenciales incorrectas');
         }
 
         if (result.token) {
-          // Guardar datos en localStorage
-          localStorage.setItem("token", result.token);
-          localStorage.setItem("user", JSON.stringify(result.user));
+          localStorage.setItem('token', result.token);
+          localStorage.setItem('user', JSON.stringify(result.user));
 
-          // Verificar que la sesión se haya establecido correctamente
-          const validationResponse = await fetch("/api/auth/validate", {
+          const validationResponse = await fetch('/api/auth/validate', {
             headers: {
               Authorization: `Bearer ${result.token}`,
             },
           });
 
           if (!validationResponse.ok) {
-            throw new Error("Error al establecer la sesión");
+            toast.error('Error al establecer la sesión');
+            throw new Error('Error al establecer la sesión');
           }
 
-          // Esperar un momento y redirigir al dashboard
+          toast.success('Inicio de sesión exitoso');
           await new Promise((resolve) => setTimeout(resolve, 500));
-          router.push("/dashboard");
+          router.push('/dashboard');
         }
       }
     } catch (err) {
-      console.error("Error:", err);
-      setError(err instanceof Error ? err.message : "Error en la operación");
+      console.error('Error:', err);
+      setError(err instanceof Error ? err.message : 'Error en la operación');
     } finally {
       setIsLoading(false);
     }
@@ -158,17 +177,17 @@ export function UserInfoStep({
   const handleSuccessModalClose = () => {
     setShowSuccessModal(false);
     // Limpiar los campos
-    setServicePassword("");
-    setUserPassword("");
+    setServicePassword('');
+    setUserPassword('');
     // Cambiar a la pestaña de login
     setIsLogin(true);
-    router.push("/auth?mode=login");
+    router.push('/auth?mode=login');
   };
 
   return (
     <>
       <Tabs
-        value={isLogin ? "login" : "register"}
+        value={isLogin ? 'login' : 'register'}
         className="w-full"
         onValueChange={handleTabChange}
       >
@@ -209,7 +228,7 @@ export function UserInfoStep({
               <div className="relative">
                 <Input
                   id="servicePassword"
-                  type={showServicePassword ? "text" : "password"}
+                  type={showServicePassword ? 'text' : 'password'}
                   value={servicePassword}
                   onChange={(e) => setServicePassword(e.target.value)}
                   placeholder="Contraseña proporcionada por el servicio"
@@ -237,7 +256,7 @@ export function UserInfoStep({
               <div className="relative">
                 <Input
                   id="userPassword"
-                  type={showUserPassword ? "text" : "password"}
+                  type={showUserPassword ? 'text' : 'password'}
                   value={userPassword}
                   onChange={(e) => setUserPassword(e.target.value)}
                   placeholder="Crea una contraseña segura"
@@ -300,12 +319,12 @@ export function UserInfoStep({
               {isLoading ? (
                 <div className="flex items-center justify-center">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  {isLogin ? "Iniciando sesión..." : "Registrando..."}
+                  {isLogin ? 'Iniciando sesión...' : 'Registrando...'}
                 </div>
               ) : isLogin ? (
-                "Iniciar Sesión"
+                'Iniciar Sesión'
               ) : (
-                "Registrarse"
+                'Registrarse'
               )}
             </Button>
           </form>
@@ -330,7 +349,7 @@ export function UserInfoStep({
               <div className="relative">
                 <Input
                   id="userPassword"
-                  type={showUserPassword ? "text" : "password"}
+                  type={showUserPassword ? 'text' : 'password'}
                   value={userPassword}
                   onChange={(e) => setUserPassword(e.target.value)}
                   placeholder="Tu contraseña"
@@ -344,6 +363,16 @@ export function UserInfoStep({
                   {showUserPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
+            </div>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => router.push('/forgot-password')}
+                className="text-sm text-purple-600 hover:text-purple-700"
+              >
+                ¿Olvidaste tu contraseña?
+              </button>
             </div>
 
             <AnimatePresence>
@@ -366,7 +395,7 @@ export function UserInfoStep({
                   Procesando...
                 </div>
               ) : (
-                <span>{!isLogin ? "Registrarse" : "Iniciar Sesión"}</span>
+                <span>{!isLogin ? 'Registrarse' : 'Iniciar Sesión'}</span>
               )}
             </Button>
           </form>

@@ -1,20 +1,20 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { StepNavigation } from "@/components/ui/step-navigation";
-import { jwtDecode } from "jwt-decode";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { type RegistrationData } from "../../types/registration";
-import { countries } from "../ui/countries-flags";
+} from '@/components/ui/select';
+import { StepNavigation } from '@/components/ui/step-navigation';
+import { jwtDecode } from 'jwt-decode';
+import { Loader2, Pencil, Trash2 } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { type RegistrationData } from '@/types/registration';
+import { countries } from '@/components/ui/countries-flags';
 
 interface PhoneStepProps {
   data: RegistrationData;
@@ -26,7 +26,7 @@ interface PhoneStepProps {
 export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [registeredPhone, setRegisteredPhone] = useState<{
     countryCode: string;
     phone: string;
@@ -48,7 +48,7 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
           onUpdate(data.phone);
         }
       } catch (error) {
-        console.error("Error al verificar teléfono:", error);
+        console.error('Error al verificar teléfono:', error);
       } finally {
         setIsInitialLoading(false);
         setHasCheckedPhone(true);
@@ -59,19 +59,19 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
 
   useEffect(() => {
     if (!data.countryCode) {
-      onUpdate({ countryCode: "+52", serviceType: "qr" });
+      onUpdate({ countryCode: '+52', serviceType: 'qr' });
     }
   }, [data.countryCode, onUpdate]);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem('token');
     if (token && !hasCheckedPhone) {
       try {
         const decoded = jwtDecode<{ email: string }>(token);
         setUserEmail(decoded.email);
         checkExistingPhone(decoded.email);
       } catch (error) {
-        console.error("Error al decodificar el token:", error);
+        console.error('Error al decodificar el token:', error);
         setIsInitialLoading(false);
         setHasCheckedPhone(true);
       }
@@ -85,7 +85,7 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
     if (!userEmail) return;
 
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const phoneData = {
@@ -94,9 +94,9 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
         serviceType: data.serviceType,
       };
 
-      const response = await fetch("/api/phone", {
-        method: isEditing ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('/api/phone', {
+        method: isEditing ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: userEmail,
           phoneData,
@@ -110,39 +110,39 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
         setIsEditing(false);
         onNext();
       } else {
-        setError(result.error || "Error al procesar la solicitud");
+        setError(result.error || 'Error al procesar la solicitud');
       }
     } catch (error) {
-      setError("Error al procesar la solicitud");
-      console.error("Error al procesar la solicitud:", error);
+      setError('Error al procesar la solicitud');
+      console.error('Error al procesar la solicitud:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!userEmail || !window.confirm("¿Estás seguro de eliminar este número?"))
+    if (!userEmail || !window.confirm('¿Estás seguro de eliminar este número?'))
       return;
 
     setIsLoading(true);
     try {
       const response = await fetch(`/api/phone?email=${userEmail}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
 
       if (response.ok) {
         setRegisteredPhone(null);
         onUpdate({
-          phone: "",
-          countryCode: "+57",
-          serviceType: "qr",
+          phone: '',
+          countryCode: '+57',
+          serviceType: 'qr',
         });
       } else {
-        setError("Error al eliminar el número");
+        setError('Error al eliminar el número');
       }
     } catch (error) {
-      console.error("Error al eliminar el número:", error);
-      setError("Error al procesar la solicitud");
+      console.error('Error al eliminar el número:', error);
+      setError('Error al procesar la solicitud');
     } finally {
       setIsLoading(false);
     }
@@ -150,7 +150,7 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Solo permitir números
-    const value = e.target.value.replace(/\D/g, "");
+    const value = e.target.value.replace(/\D/g, '');
     // Limitar a 10 dígitos
     const truncatedValue = value.slice(0, 10);
     onUpdate({ phone: truncatedValue });
@@ -181,10 +181,10 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
                   {registeredPhone.countryCode} {registeredPhone.phone}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Servicio:{" "}
-                  {registeredPhone.serviceType === "qr"
-                    ? "Solo QR"
-                    : "WhatsApp Business"}
+                  Servicio:{' '}
+                  {registeredPhone.serviceType === 'qr'
+                    ? 'Solo QR'
+                    : 'WhatsApp Business'}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -225,7 +225,7 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
               <Label>Celular</Label>
               <div className="flex gap-2">
                 <Select
-                  value={data.countryCode || "+52"}
+                  value={data.countryCode || '+52'}
                   onValueChange={(value) => onUpdate({ countryCode: value })}
                   disabled={isLoading}
                 >
@@ -273,7 +273,7 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
                 defaultValue="qr"
                 value={data.serviceType}
                 onValueChange={(value) =>
-                  onUpdate({ serviceType: value as "whatsapp" | "qr" })
+                  onUpdate({ serviceType: value as 'whatsapp' | 'qr' })
                 }
                 disabled={isLoading}
                 className="space-y-4"
@@ -333,11 +333,11 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
             nextLabel={
               isEditing
                 ? isLoading
-                  ? "Guardando..."
-                  : "Guardar Cambios"
+                  ? 'Guardando...'
+                  : 'Guardar Cambios'
                 : isLoading
-                ? "Registrando..."
-                : "Registrar Número"
+                ? 'Registrando...'
+                : 'Registrar Número'
             }
           />
         </div>
