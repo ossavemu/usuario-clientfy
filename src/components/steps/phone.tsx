@@ -12,7 +12,7 @@ import {
 import { StepNavigation } from "@/components/ui/step-navigation";
 import { jwtDecode } from "jwt-decode";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type RegistrationData } from "../../types/registration";
 import { countries } from "../ui/countries-flags";
 
@@ -34,9 +34,12 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
   } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [hasCheckedPhone, setHasCheckedPhone] = useState(false);
 
   const checkExistingPhone = useCallback(
     async (email: string) => {
+      if (hasCheckedPhone) return;
+
       try {
         const response = await fetch(`/api/phone?email=${email}`);
         const data = await response.json();
@@ -48,9 +51,10 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
         console.error("Error al verificar teléfono:", error);
       } finally {
         setIsInitialLoading(false);
+        setHasCheckedPhone(true);
       }
     },
-    [onUpdate]
+    [onUpdate, hasCheckedPhone]
   );
 
   useEffect(() => {
@@ -61,7 +65,7 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
+    if (token && !hasCheckedPhone) {
       try {
         const decoded = jwtDecode<{ email: string }>(token);
         setUserEmail(decoded.email);
@@ -69,11 +73,13 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
       } catch (error) {
         console.error("Error al decodificar el token:", error);
         setIsInitialLoading(false);
+        setHasCheckedPhone(true);
       }
-    } else {
+    } else if (!token) {
       setIsInitialLoading(false);
+      setHasCheckedPhone(true);
     }
-  }, [checkExistingPhone]);
+  }, [checkExistingPhone, hasCheckedPhone]);
 
   const handleSubmit = async () => {
     if (!userEmail) return;
@@ -205,16 +211,10 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
           </div>
           <div className="flex-1" />
           <StepNavigation
-            currentStep={3}
+            currentStep={1}
             totalSteps={8}
             onNext={onNext}
-            onBack={() => {
-              if (userEmail) {
-                window.location.hash = "/welcome";
-              } else {
-                onBack();
-              }
-            }}
+            onBack={onBack}
             isBackDisabled={false}
           />
         </div>
@@ -324,12 +324,12 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
           <div className="flex-1" />
 
           <StepNavigation
-            currentStep={3}
+            currentStep={1}
             totalSteps={8}
             onNext={handleSubmit}
             onBack={onBack}
             isNextDisabled={!isPhoneValid || isLoading}
-            isBackDisabled={!!userEmail}
+            isBackDisabled={false}
             nextLabel={
               isEditing
                 ? isLoading

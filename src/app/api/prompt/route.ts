@@ -1,42 +1,55 @@
-import { getPrompt, savePrompt } from '@/lib/azureStorage';
-import { NextResponse } from 'next/server';
+import {
+  BUCKET_NAME,
+  getUserFiles,
+  s3Client,
+  uploadFile,
+} from "@/lib/s3Storage";
+import { GetObjectCommand } from "@aws-sdk/client-s3";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const phoneNumber = searchParams.get('phoneNumber');
+    const phoneNumber = searchParams.get("phoneNumber");
 
     if (!phoneNumber) {
       return NextResponse.json(
-        { error: 'Se requiere número de teléfono' },
+        { error: "Se requiere número de teléfono" },
         { status: 400 }
       );
     }
 
-    const result = await getPrompt(phoneNumber);
+    const result = await getUserFiles(phoneNumber, "prompt");
+    const promptFile = result.files.find((file) => file.name === "prompt.txt");
 
-    if (!result.success) {
-      if (!result.exists) {
-        return NextResponse.json(
-          { error: 'Prompt no encontrado' },
-          { status: 404 }
-        );
-      }
-      throw new Error('Error al obtener el prompt');
+    if (!promptFile) {
+      return NextResponse.json(
+        { error: "Prompt no encontrado" },
+        { status: 404 }
+      );
+    }
+
+    // Obtener el contenido del archivo
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: `${phoneNumber}/prompt/prompt.txt`,
+    });
+
+    const response = await s3Client.send(getObjectCommand);
+    const promptContent = await response.Body?.transformToString();
+
+    if (!promptContent) {
+      throw new Error("No se pudo leer el contenido del prompt");
     }
 
     return NextResponse.json({
       success: true,
-      prompt: result.prompt,
-      url: result.url,
+      prompt: promptContent,
     });
   } catch (error) {
-    console.error('Error en GET /api/prompt:', error);
+    console.error("Error en GET /api/prompt:", error);
     return NextResponse.json(
-      {
-        error: 'Error al obtener el prompt',
-        details: error,
-      },
+      { error: "Error al obtener el prompt", details: error },
       { status: 500 }
     );
   }
@@ -48,26 +61,29 @@ export async function POST(request: Request) {
 
     if (!phoneNumber || !prompt) {
       return NextResponse.json(
-        { error: 'Se requieren número de teléfono y prompt' },
+        { error: "Se requieren número de teléfono y prompt" },
         { status: 400 }
       );
     }
 
-    const result = await savePrompt(phoneNumber, prompt);
+    const buffer = Buffer.from(prompt, "utf-8");
+    const result = await uploadFile(
+      buffer,
+      "prompt.txt",
+      phoneNumber,
+      "prompt"
+    );
 
     return NextResponse.json({
       success: true,
-      message: 'Prompt guardado exitosamente',
+      message: "Prompt guardado exitosamente",
       url: result.url,
-      prompt: result.prompt,
+      prompt: prompt,
     });
   } catch (error) {
-    console.error('Error en POST /api/prompt:', error);
+    console.error("Error en POST /api/prompt:", error);
     return NextResponse.json(
-      {
-        error: 'Error al guardar el prompt',
-        details: error,
-      },
+      { error: "Error al guardar el prompt", details: error },
       { status: 500 }
     );
   }

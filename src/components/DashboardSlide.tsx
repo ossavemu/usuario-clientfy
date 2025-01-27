@@ -146,54 +146,79 @@ export function DashboardSlide({
 }: DashboardSlideProps) {
   const [isVerifyingBot, setIsVerifyingBot] = useState(true);
   const [canCreateBot, setCanCreateBot] = useState(false);
+  const [hasCheckedData, setHasCheckedData] = useState(false);
 
-  // Efecto para verificar el bot y datos adicionales
   useEffect(() => {
     const verifyBotData = async () => {
-      if (!userEmail) {
+      if (!userEmail || hasCheckedData) {
         setIsVerifyingBot(false);
         return;
       }
 
       try {
-        // Obtener datos del teléfono
-        const phoneResponse = await fetch(`/api/phone?email=${userEmail}`);
-        const phoneData = phoneResponse.ok ? await phoneResponse.json() : null;
-
-        if (phoneData?.phone) {
-          onUpdate({
-            phone: phoneData.phone.phone,
-            countryCode: phoneData.phone.countryCode,
-            serviceType: phoneData.phone.serviceType,
-          });
-
-          const phoneNumber =
-            `${phoneData.phone.countryCode}${phoneData.phone.phone}`.replace(
-              /\+/g,
-              ""
-            );
-          const promptResponse = await fetch(
-            `/api/prompt?phoneNumber=${phoneNumber}`
-          );
-          const promptData = promptResponse.ok
-            ? await promptResponse.json()
+        // Obtener datos del teléfono solo si no los tenemos ya
+        if (!data.phone || !data.countryCode) {
+          const phoneResponse = await fetch(`/api/phone?email=${userEmail}`);
+          const phoneData = phoneResponse.ok
+            ? await phoneResponse.json()
             : null;
 
-          if (promptData?.prompt) {
-            onUpdate({ prompt: promptData.prompt });
-          }
+          if (phoneData?.phone) {
+            onUpdate({
+              phone: phoneData.phone.phone,
+              countryCode: phoneData.phone.countryCode,
+              serviceType: phoneData.phone.serviceType,
+            });
 
-          setCanCreateBot(Boolean(phoneData.phone && promptData?.prompt));
+            // Solo verificamos el prompt si tenemos datos del teléfono
+            const phoneNumber =
+              `${phoneData.phone.countryCode}${phoneData.phone.phone}`.replace(
+                /\+/g,
+                ""
+              );
+
+            let promptExists = false;
+            if (!data.prompt) {
+              const promptResponse = await fetch(
+                `/api/prompt?phoneNumber=${phoneNumber}`
+              );
+              const promptData = promptResponse.ok
+                ? await promptResponse.json()
+                : null;
+
+              if (promptData?.prompt) {
+                onUpdate({ prompt: promptData.prompt });
+                promptExists = true;
+              }
+            }
+
+            setCanCreateBot(
+              Boolean(phoneData.phone && (promptExists || data.prompt))
+            );
+          }
+        } else {
+          // Si ya tenemos teléfono, actualizamos canCreateBot basado en los datos existentes
+          setCanCreateBot(
+            Boolean(data.phone && data.countryCode && data.prompt)
+          );
         }
       } catch (error) {
         console.error("Error al verificar datos del bot:", error);
       } finally {
         setIsVerifyingBot(false);
+        setHasCheckedData(true);
       }
     };
 
     verifyBotData();
-  }, [userEmail, onUpdate]);
+  }, [
+    userEmail,
+    data.phone,
+    data.countryCode,
+    data.prompt,
+    hasCheckedData,
+    onUpdate,
+  ]);
 
   // Función para obtener el saludo según la hora
   const getGreeting = () => {

@@ -1,4 +1,4 @@
-import { getTrainingFiles, uploadTrainingFile } from "@/lib/azureStorage";
+import { getUserFiles, uploadFile } from "@/lib/s3Storage";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
@@ -18,9 +18,18 @@ export async function POST(request: Request) {
     const uploadPromises = files.map(async (file, index) => {
       try {
         const buffer = Buffer.from(await file.arrayBuffer());
-        const fileName = names[index] || file.name;
-        const url = await uploadTrainingFile(buffer, fileName, phoneNumber);
-        return { success: true, url, name: fileName };
+        const extension = file.name.split(".").pop() || "";
+        const fileName = `${
+          names[index] || file.name.split(".")[0]
+        }.${extension}`;
+
+        const result = await uploadFile(
+          buffer,
+          fileName,
+          phoneNumber,
+          "training"
+        );
+        return { success: true, name: fileName, url: result.url };
       } catch (error) {
         console.error(`Error al subir archivo ${file.name}:`, error);
         return { success: false, error: "Error al subir el archivo" };
@@ -28,33 +37,23 @@ export async function POST(request: Request) {
     });
 
     const results = await Promise.all(uploadPromises);
+    const successfulUploads = results.filter((r) => r.success);
 
-    const allSuccessful = results.every((r) => r.success);
-    const successfulFiles = results
-      .filter((r) => r.success)
-      .map((r) => ({
-        name: r.name,
-        url: r.url,
-      }));
-
-    if (!allSuccessful) {
+    if (successfulUploads.length === 0) {
       return NextResponse.json(
-        {
-          error: "Algunos archivos no pudieron ser subidos",
-          files: successfulFiles,
-        },
-        { status: 207 }
+        { error: "No se pudo subir ningún archivo" },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json({ success: true, files: successfulFiles });
+    return NextResponse.json({
+      success: true,
+      files: successfulUploads,
+    });
   } catch (error) {
     console.error("Error en POST /api/training-files:", error);
     return NextResponse.json(
-      {
-        error: "Error al subir los archivos",
-        details: error,
-      },
+      { error: "Error al subir los archivos", details: error },
       { status: 500 }
     );
   }
@@ -72,15 +71,12 @@ export async function GET(request: Request) {
       );
     }
 
-    const files = await getTrainingFiles(phoneNumber);
-    return NextResponse.json({ success: true, files });
-  } catch (error: unknown) {
+    const result = await getUserFiles(phoneNumber, "training");
+    return NextResponse.json({ success: true, files: result.files });
+  } catch (error) {
     console.error("Error en GET /api/training-files:", error);
     return NextResponse.json(
-      {
-        error: "Error al obtener los archivos",
-        details: error,
-      },
+      { error: "Error al obtener los archivos", details: error },
       { status: 500 }
     );
   }

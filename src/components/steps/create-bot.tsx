@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { motion } from 'framer-motion';
-import { Bot, Calendar, QrCode, Users } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { motion } from "framer-motion";
+import { Bot, Calendar, QrCode, Users } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface InstanceInfo {
   instanceName: string;
@@ -18,148 +18,101 @@ interface InstanceInfo {
   dropletId: number;
 }
 
-export function CreateBotStep() {
+interface CreateBotStepProps {
+  phoneNumber: string;
+}
+
+export function CreateBotStep({ phoneNumber }: CreateBotStepProps) {
   const [isCreating, setIsCreating] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(180); // 3 minutos en segundos
-  const [instanceInfo, setInstanceInfo] = useState<InstanceInfo | null>(null);
-  const [qrUrl, setQrUrl] = useState<string | null>(null);
-  const [message, setMessage] = useState<string>('Creando el bot...');
-  const statusIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const qrIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Nuevos estados para las opciones
+  const [message, setMessage] = useState<string>("Creando el bot...");
   const [enableAppointments, setEnableAppointments] = useState(false);
   const [enableAutoInvite, setEnableAutoInvite] = useState(false);
 
   useEffect(() => {
     if (isCreating) {
-      // Crear instancia
-      //crearInstancia();
+      let intentos = 0;
+      const maxIntentos = 50;
 
-      // Iniciar contador de tiempo
-      const timer = setInterval(() => {
-        setTimeLeft((prevTime) => {
-          if (prevTime <= 1) {
-            clearInterval(timer);
+      const pollInterval = setInterval(async () => {
+        try {
+          const response = await fetch(
+            `http://localhost:3001/api/instance/status/57${phoneNumber}`,
+            {
+              method: "GET",
+              headers: {
+                "x-api-key": "2rgIgH4GXmVzRsr8juvS3dDTxr3",
+              },
+            }
+          );
+          const data = await response.json();
+          console.log("Estado actual:", data);
+          
+          intentos++;
+          if (intentos >= maxIntentos) {
+            console.log("Se alcanzó el máximo de intentos de verificación");
+            clearInterval(pollInterval);
             setIsCreating(false);
-            setMessage('Tiempo de espera agotado.');
-            return 0;
           }
-          return prevTime - 1;
-        });
-      }, 1000);
-
-      return () => {
-        clearInterval(timer);
-        if (statusIntervalRef.current) {
-          clearInterval(statusIntervalRef.current);
+        } catch (error) {
+          console.error("Error al verificar estado:", error);
+          // Continuamos el polling a pesar del error
         }
-        if (qrIntervalRef.current) {
-          clearInterval(qrIntervalRef.current);
-        }
-      };
+      }, 20000);
+
+      return () => clearInterval(pollInterval);
     }
-  }, [isCreating]);
+  }, [isCreating, phoneNumber]);
 
-  /*   const crearInstancia = async () => {
+  const crearInstancia = async (requestBody: {
+    numberphone: string;
+    provider?: string;
+    enableAppointments: boolean;
+    enableAutoInvite: boolean;
+  }) => {
     try {
-      const response = await fetch(`${ORQUESTA_URL}/api/instance/create`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          numberphone,
-          provider: 'baileys',
-        }),
-      });
+      console.log("Enviando solicitud con:", requestBody);
 
-      const data = await response.json();
-
-      if (data.success) {
-        setMessage('Instancia creada. Verificando estado...');
-        // Iniciar verificación de estado cada 10 segundos
-        statusIntervalRef.current = setInterval(() => {
-          verificarEstado();
-        }, 10000);
-      } else {
-        // Manejar error
-        setMessage('Error al crear la instancia.');
-        setIsCreating(false);
-      }
-    } catch (error) {
-      console.error('Error al crear la instancia:', error);
-      setMessage('Error al crear la instancia.');
-      setIsCreating(false);
-    }
-  };
-
-  const verificarEstado = async () => {
-    try {
       const response = await fetch(
-        `${ORQUESTA_URL}/api/instance/status/${numberphone}`
-      );
-      const data = await response.json();
-
-      if (data.status === 'completed') {
-        setMessage('Instancia creada exitosamente. Obteniendo QR...');
-        setInstanceInfo(data.instanceInfo);
-        if (statusIntervalRef.current) {
-          clearInterval(statusIntervalRef.current);
+        "http://localhost:3001/api/instance/create",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-api-key": "2rgIgH4GXmVzRsr8juvS3dDTxr3",
+          },
+          body: JSON.stringify({
+            ...requestBody,
+            numberphone: `57${requestBody.numberphone}`,
+            provider: "baileys",
+          }),
         }
-        // Obtener el QR inicial
-        actualizarQr(data.instanceInfo.ip);
-        // Iniciar actualización del QR cada 30 segundos
-        qrIntervalRef.current = setInterval(() => {
-          actualizarQr(data.instanceInfo.ip);
-        }, 30000);
-      } else {
-        setProgress(data.progress);
-        setMessage(`Estado: ${data.status}. Progreso: ${data.progress}%`);
-      }
+      );
+
+      const data = await response.json();
+      console.log("Respuesta del servidor:", data);
     } catch (error) {
-      console.error('Error al verificar el estado:', error);
-      setMessage('Error al verificar el estado de la instancia.');
-      if (statusIntervalRef.current) {
-        clearInterval(statusIntervalRef.current);
-      }
-      setIsCreating(false);
+      console.error("Error al crear la instancia:", error);
     }
   };
 
-  const actualizarQr = async (ip: string) => {
-    try {
-      const response = await fetch(`http://${ip}:3008`);
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        setQrUrl(url);
-        setMessage(
-          'Actualizando QR. Por favor, escanea el código en WS > Dispositivos Vinculados. Si no funciona, espera unos segundos a que se refresque el QR.'
-        );
-      } else {
-        console.error('Error al obtener el QR:', response.statusText);
-        setMessage('Error al obtener el QR. Intentando de nuevo...');
-      }
-    } catch (error) {
-      console.error('Error al actualizar el QR:', error);
-      setMessage('Error al actualizar el QR. Intentando de nuevo...');
-    }
-  };
- */
   const handleCreateBot = () => {
     setIsCreating(true);
     setProgress(0);
-    setTimeLeft(180);
-    setInstanceInfo(null);
-    setQrUrl(null);
-    setMessage('Iniciando creación del asistente inteligente...');
+    setMessage("Iniciando creación del asistente inteligente...");
+
+    const requestBody = {
+      numberphone: phoneNumber,
+      enableAppointments,
+      enableAutoInvite,
+    };
+
+    crearInstancia(requestBody);
   };
 
   return (
     <div className="text-center space-y-4">
-      {!isCreating && !instanceInfo ? (
+      {!isCreating ? (
         <>
           <Bot className="w-16 h-16 mx-auto text-purple-600" />
           <h3 className="text-xl font-semibold">
@@ -245,46 +198,33 @@ export function CreateBotStep() {
                 animate={{
                   strokeDashoffset: [2 * Math.PI * 45, 0],
                   stroke: [
-                    '#FF6B6B',
-                    '#4ECDC4',
-                    '#45B7D1',
-                    '#FFA07A',
-                    '#98D8C8',
+                    "#FF6B6B",
+                    "#4ECDC4",
+                    "#45B7D1",
+                    "#FFA07A",
+                    "#98D8C8",
                   ],
                 }}
                 transition={{
                   strokeDashoffset: {
                     duration: 180,
-                    ease: 'linear',
+                    ease: "linear",
                   },
                   stroke: {
                     duration: 3,
                     repeat: Infinity,
-                    ease: 'linear',
+                    ease: "linear",
                   },
                 }}
               />
             </svg>
-            {qrUrl ? (
-              <img
-                src={qrUrl}
-                alt="QR del Asistente Inteligente"
-                className="absolute inset-0 flex items-center justify-center w-full h-full object-cover"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <QrCode className="w-40 h-40 text-gray-800" />
-              </div>
-            )}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <QrCode className="w-40 h-40 text-gray-800" />
+            </div>
           </div>
           <div className="text-center">
-            <p className="text-4xl font-bold">{formatTime(timeLeft)}</p>
+            <p className="text-4xl font-bold">{formatTime(180)}</p>
             <p className="text-lg font-medium mt-2">{message}</p>
-            {!qrUrl && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Por favor, espera mientras se crea tu asistente inteligente.
-              </p>
-            )}
           </div>
         </div>
       )}
@@ -295,5 +235,5 @@ export function CreateBotStep() {
 const formatTime = (seconds: number) => {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 };

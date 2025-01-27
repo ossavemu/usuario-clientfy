@@ -52,6 +52,11 @@ export default function RegistrationFlow() {
   };
 
   const prevStep = () => {
+    if (currentStep === 1 && userEmail) {
+      window.location.href = "/dashboard";
+      return;
+    }
+
     const prevIndex = Math.max(currentStep - 1, 0);
     window.location.hash = "/" + steps[prevIndex].path;
     setCurrentStep(prevIndex);
@@ -75,19 +80,11 @@ export default function RegistrationFlow() {
         const decoded = jwtDecode<{ email: string }>(token);
         setUserEmail(decoded.email);
 
+        // Cargar datos del usuario desde localStorage
         const userData = localStorage.getItem("user");
         if (userData) {
           const user = JSON.parse(userData);
           updateFormData(user);
-        }
-
-        // Cargar datos adicionales del usuario
-        const userResponse = await fetch(`/api/user?email=${decoded.email}`);
-        if (userResponse.ok) {
-          const data = await userResponse.json();
-          if (data.user) {
-            updateFormData(data.user);
-          }
         }
       } catch (error) {
         console.error("Error al cargar datos:", error);
@@ -184,7 +181,7 @@ export default function RegistrationFlow() {
           />
         );
       case 5:
-        return <CreateBotStep />;
+        return <CreateBotStep phoneNumber={formData.phone} />;
       default:
         return null;
     }

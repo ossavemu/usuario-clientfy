@@ -46,7 +46,6 @@ async function optimizeImage(file: File): Promise<Blob> {
       canvas.width = width;
       canvas.height = height;
 
-      // Dibujar imagen redimensionada
       ctx.drawImage(img, 0, 0, width, height);
 
       // Convertir a JPEG con compresión
@@ -111,7 +110,7 @@ export function ImageUploadStep({
     };
 
     loadExistingImages();
-  }, [data.countryCode, data.phone]);
+  }, [data.countryCode, data.phone, onUpdate]);
 
   useEffect(() => {
     return () => {

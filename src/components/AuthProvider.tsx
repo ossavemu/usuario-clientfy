@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/ui/button";
 import { jwtDecode } from "jwt-decode";
-import { LogOut } from "lucide-react";
+import { Home, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface AuthProviderProps {
   children?: React.ReactNode;
@@ -117,6 +117,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     router.push("/");
   };
 
+  const handleGoHome = () => {
+    window.location.href = "/dashboard";
+  };
+
   if (isLoading) {
     return null;
   }
@@ -124,7 +128,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return (
     <>
       {isAuthenticated && (
-        <div className="absolute top-0 right-0 p-4 z-50">
+        <div className="absolute top-0 right-0 p-4 z-50 flex gap-2">
+          <Button
+            variant="ghost"
+            onClick={handleGoHome}
+            className="text-white hover:text-white/80 hover:bg-purple-700/20"
+            size="sm"
+          >
+            <Home className="h-4 w-4 mr-2" />
+            Inicio
+          </Button>
           <Button
             variant="ghost"
             onClick={handleLogout}

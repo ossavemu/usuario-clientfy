@@ -1,6 +1,6 @@
 import { type RegistrationData } from "@/types/registration";
-import Redis from "ioredis";
 import jwt from "jsonwebtoken";
+import { getRedisClient } from "./redis-client";
 
 export interface PhoneData {
   countryCode: string;
@@ -8,55 +8,78 @@ export interface PhoneData {
   serviceType?: string;
 }
 
-const redis = new Redis(process.env.REDIS_URL || "", {
-  tls: {
-    rejectUnauthorized: false,
-  },
-  retryStrategy(times: number) {
-    const delay = Math.min(times * 50, 2000);
-    return delay;
-  },
-  maxRetriesPerRequest: 5,
-});
-
-// Manejar eventos de Redis
-redis.on("error", (error) => {
-  console.error("Error de conexión Redis:", error);
-});
-
-redis.on("connect", () => {
-  console.log("Conectado exitosamente a Redis");
-});
-
 export async function saveUser(data: RegistrationData) {
-  const token = jwt.sign({ email: data.email }, "tu_secreto_jwt", {
-    expiresIn: "1h",
-  });
-  await redis.set(`user:${data.email}`, JSON.stringify(data));
-  return token;
+  try {
+    const redis = getRedisClient();
+    const token = jwt.sign({ email: data.email }, "tu_secreto_jwt", {
+      expiresIn: "1h",
+    });
+    await redis.set(`user:${data.email}`, JSON.stringify(data));
+    await redis.expire(`user:${data.email}`, 24 * 60 * 60);
+    return token;
+  } catch (error) {
+    console.error("Error al guardar usuario:", error);
+    throw new Error("Error al guardar el usuario en Redis");
+  }
 }
 
 export async function getUser(email: string) {
-  const user = await redis.get(`user:${email}`);
-  return user ? JSON.parse(user) : null;
+  try {
+    const redis = getRedisClient();
+    const user = await redis.get(`user:${email}`);
+    return user ? JSON.parse(user) : null;
+  } catch (error) {
+    console.error("Error al obtener usuario:", error);
+    return null;
+  }
 }
 
 export async function getUserPhone(email: string) {
-  const phone = await redis.get(`phone:${email}`);
-  return phone ? JSON.parse(phone) : null;
+  try {
+    const redis = getRedisClient();
+    const key = `phone:${email}`;
+    const phone = await redis.get(key);
+    return phone ? JSON.parse(phone) : null;
+  } catch (error) {
+    console.error("Error al obtener teléfono:", error);
+    return null;
+  }
 }
 
 export async function saveUserPhone(email: string, phoneData: PhoneData) {
-  await redis.set(`phone:${email}`, JSON.stringify(phoneData));
-  return true;
+  try {
+    const redis = getRedisClient();
+    const key = `phone:${email}`;
+    await redis.set(key, JSON.stringify(phoneData));
+    // Agregar un TTL de 24 horas para evitar datos huérfanos
+    await redis.expire(key, 24 * 60 * 60);
+    return true;
+  } catch (error) {
+    console.error("Error al guardar teléfono:", error);
+    throw new Error("Error al guardar el teléfono en Redis");
+  }
 }
 
 export async function deleteUserPhone(email: string) {
-  await redis.del(`phone:${email}`);
-  return true;
+  try {
+    const redis = getRedisClient();
+    await redis.del(`phone:${email}`);
+    return true;
+  } catch (error) {
+    console.error("Error al eliminar teléfono:", error);
+    throw new Error("Error al eliminar el teléfono de Redis");
+  }
 }
 
 export async function updateUserPhone(email: string, phoneData: PhoneData) {
-  await redis.set(`phone:${email}`, JSON.stringify(phoneData));
-  return true;
+  try {
+    const redis = getRedisClient();
+    const key = `phone:${email}`;
+    await redis.set(key, JSON.stringify(phoneData));
+    await redis.expire(key, 24 * 60 * 60);
+    return true;
+  } catch (error) {
+    console.error("Error al actualizar teléfono:", error);
+    throw new Error("Error al actualizar el teléfono en Redis");
+  }
 }

@@ -161,6 +161,7 @@ export function UserInfoStep({
     setServicePassword("");
     setUserPassword("");
     // Cambiar a la pestaña de login
+    setIsLogin(true);
     router.push("/auth?mode=login");
   };
 

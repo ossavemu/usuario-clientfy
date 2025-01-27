@@ -31,11 +31,13 @@ export function PromptStep({
   const [showRevert, setShowRevert] = useState(false);
   const [existingPrompt, setExistingPrompt] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(true);
+  const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
 
-  // Cargar prompt existente
+  // Cargar prompt existente solo una vez al montar el componente
   useEffect(() => {
     const loadExistingPrompt = async () => {
-      if (!data.countryCode || !data.phone) return;
+      if (!data.countryCode || !data.phone || hasAttemptedLoad || data.prompt)
+        return;
 
       try {
         const phoneNumber = `${data.countryCode}${data.phone}`.replace(
@@ -46,22 +48,20 @@ export function PromptStep({
 
         if (response.ok) {
           const result = await response.json();
-          if (result.success && result.prompt && !data.prompt) {
+          if (result.success && result.prompt) {
             onUpdate({ prompt: result.prompt });
             setExistingPrompt(true);
           }
-        } else if (response.status !== 404) {
-          console.error("Error al cargar prompt:", await response.text());
         }
       } catch (error) {
         console.error("Error al cargar prompt:", error);
+      } finally {
+        setHasAttemptedLoad(true);
       }
     };
 
-    if (!existingPrompt) {
-      loadExistingPrompt();
-    }
-  }, [data.countryCode, data.phone, data.prompt, existingPrompt, onUpdate]);
+    loadExistingPrompt();
+  }, [data.countryCode, data.phone, hasAttemptedLoad, data.prompt, onUpdate]);
 
   // Guardar prompt
   const handleSave = async () => {
