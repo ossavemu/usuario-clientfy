@@ -75,7 +75,9 @@ export async function getUserFiles(
 
     const filesWithUrls = await Promise.all(
       files.Contents.map(async (file: _Object) => {
-        const name = file.Key!.split('/').pop()!;
+        const fileName = file.Key!.split('/').pop()!;
+        // Extraer el nombre base sin extensión para el campo 'name'
+        const name = fileName.replace(/\.[^/.]+$/, '');
         const url = await getSignedUrl(
           s3Client,
           new GetObjectCommand({

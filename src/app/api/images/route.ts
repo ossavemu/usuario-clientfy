@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const uploadPromises = files.map(async (file, index) => {
       try {
         const buffer = Buffer.from(await file.arrayBuffer());
-        const fileName = names[index] || file.name;
+        const fileName = `${names[index] || file.name}.jpg`;
         const result = await uploadFile(buffer, fileName, phoneNumber, 'image');
         return { success: true, url: result.url };
       } catch (error) {

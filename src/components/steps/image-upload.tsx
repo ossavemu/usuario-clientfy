@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StepNavigation } from '@/components/ui/step-navigation';
 import { type RegistrationData } from '@/types/registration';
-import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -164,7 +163,7 @@ export function ImageUploadStep({
   };
 
   const handleRemoveUploadedImage = async (name: string) => {
-    setDeleteModal({ isOpen: true, imageName: name });
+    setDeleteModal({ isOpen: true, imageName: `${name}.jpg` });
   };
 
   const confirmDelete = async () => {
@@ -281,12 +280,10 @@ export function ImageUploadStep({
                   className="flex items-center gap-4 p-4 border rounded-lg bg-gray-50"
                 >
                   <div className="relative w-16 h-16">
-                    <Image
+                    <img
                       src={image.url}
                       alt={image.name}
-                      fill
-                      sizes="64px"
-                      className="object-cover rounded"
+                      className="object-cover rounded w-16 h-16"
                     />
                   </div>
                   <div className="flex-1">
@@ -353,12 +350,10 @@ export function ImageUploadStep({
                   className="flex items-center gap-4 p-4 border rounded-lg"
                 >
                   <div className="relative w-16 h-16">
-                    <Image
+                    <img
                       src={image.preview}
                       alt={image.name}
-                      fill
-                      sizes="64px"
-                      className="object-cover rounded"
+                      className="object-cover rounded w-16 h-16"
                     />
                   </div>
                   <div className="flex-1">
