@@ -32,9 +32,9 @@ export async function GET(request: Request) {
         success: true,
         prompt: promptContent,
       });
-    } catch (error: any) {
+    } catch (error) {
       // Si el error es porque el archivo no existe, devolver 404
-      if (error.name === 'NoSuchKey') {
+      if (error instanceof Error && error.name === 'NoSuchKey') {
         return NextResponse.json(
           { error: 'Prompt no encontrado' },
           { status: 404 }
