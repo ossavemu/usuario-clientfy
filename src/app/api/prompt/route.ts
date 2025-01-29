@@ -1,9 +1,4 @@
-import {
-  BUCKET_NAME,
-  getUserFiles,
-  s3Client,
-  uploadFile,
-} from '@/lib/s3Storage';
+import { BUCKET_NAME, s3Client, uploadFile } from '@/lib/s3Storage';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { NextResponse } from 'next/server';
 
@@ -19,33 +14,35 @@ export async function GET(request: Request) {
       );
     }
 
-    const result = await getUserFiles(phoneNumber, 'prompt');
-    const promptFile = result.files.find((file) => file.name === 'prompt.txt');
+    // Intentar obtener el archivo directamente sin verificar si existe primero
+    try {
+      const getObjectCommand = new GetObjectCommand({
+        Bucket: BUCKET_NAME,
+        Key: `${phoneNumber}/prompt/prompt.txt`,
+      });
 
-    if (!promptFile) {
-      return NextResponse.json(
-        { error: 'Prompt no encontrado' },
-        { status: 404 }
-      );
+      const response = await s3Client.send(getObjectCommand);
+      const promptContent = await response.Body?.transformToString();
+
+      if (!promptContent) {
+        throw new Error('No se pudo leer el contenido del prompt');
+      }
+
+      return NextResponse.json({
+        success: true,
+        prompt: promptContent,
+      });
+    } catch (error: any) {
+      // Si el error es porque el archivo no existe, devolver 404
+      if (error.name === 'NoSuchKey') {
+        return NextResponse.json(
+          { error: 'Prompt no encontrado' },
+          { status: 404 }
+        );
+      }
+      // Si es otro tipo de error, relanzarlo para que lo maneje el catch exterior
+      throw error;
     }
-
-    // Obtener el contenido del archivo
-    const getObjectCommand = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: `${phoneNumber}/prompt/prompt.txt`,
-    });
-
-    const response = await s3Client.send(getObjectCommand);
-    const promptContent = await response.Body?.transformToString();
-
-    if (!promptContent) {
-      throw new Error('No se pudo leer el contenido del prompt');
-    }
-
-    return NextResponse.json({
-      success: true,
-      prompt: promptContent,
-    });
   } catch (error) {
     console.error('Error en GET /api/prompt:', error);
     return NextResponse.json(
