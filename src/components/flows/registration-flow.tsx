@@ -13,6 +13,7 @@ import { jwtDecode } from 'jwt-decode';
 import { Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 const steps = [
   { name: 'Dashboard', path: '' },
@@ -40,6 +41,14 @@ export default function RegistrationFlow() {
     prompt: '',
     assistantName: '',
   });
+
+  const [isCheckingPanel, setIsCheckingPanel] = useState(false);
+  const [existingInstance, setExistingInstance] = useState<{
+    exists: boolean;
+    ip: string | null;
+    isActive: boolean;
+    hasQr: boolean;
+  } | null>(null);
 
   const updateFormData = useCallback((data: Partial<RegistrationData>) => {
     setFormData((prev) => ({ ...prev, ...data }));
@@ -124,6 +133,31 @@ export default function RegistrationFlow() {
     }
   };
 
+  useEffect(() => {
+    // Limpiar estados al cambiar de paso
+    if (currentStep !== 5) {
+      setExistingInstance(null);
+      setIsCheckingPanel(false);
+    }
+  }, [currentStep]);
+
+  const handleStepChange = async (stepIndex: number) => {
+    if (stepIndex === 5) {
+      setIsCheckingPanel(true);
+      try {
+        const response = await fetch(`/api/instance/verify?email=${userEmail}`);
+        const data = await response.json();
+        setExistingInstance(data);
+      } catch (error) {
+        console.error('Error al verificar instancia:', error);
+        toast.error('Error al verificar la instancia existente');
+      } finally {
+        setIsCheckingPanel(false);
+      }
+    }
+    goToStep(stepIndex);
+  };
+
   const renderStep = () => {
     if (isLoadingInitialData) {
       return (
@@ -134,12 +168,21 @@ export default function RegistrationFlow() {
       );
     }
 
+    if (isCheckingPanel) {
+      return (
+        <div className="flex flex-col items-center justify-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+          <p className="text-gray-600">Verificando instancia existente...</p>
+        </div>
+      );
+    }
+
     switch (currentStep) {
       case 0:
         return (
           <DashboardSlide
             data={formData}
-            onNavigate={goToStep}
+            onNavigate={handleStepChange}
             userEmail={userEmail}
             onUpdate={updateFormData}
             onLogout={handleLogout}
@@ -181,7 +224,13 @@ export default function RegistrationFlow() {
           />
         );
       case 5:
-        return <CreateBotStep phoneNumber={formData.phone} />;
+        return (
+          <CreateBotStep
+            phoneNumber={formData.phone}
+            userEmail={userEmail || ''}
+            existingInstance={existingInstance}
+          />
+        );
       default:
         return null;
     }

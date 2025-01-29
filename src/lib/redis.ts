@@ -57,3 +57,11 @@ export async function getFromRedis(key: string): Promise<string | null> {
   }
   return value;
 }
+
+export const setInstanceIp = async (email: string, ip: string) => {
+  await redis.set(`instance:${email}`, ip);
+};
+
+export const getInstanceIp = async (email: string) => {
+  return await redis.get(`instance:${email}`);
+};

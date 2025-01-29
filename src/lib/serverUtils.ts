@@ -5,7 +5,7 @@ import { redis } from './redis';
 export interface PhoneData {
   countryCode: string;
   phone: string;
-  serviceType?: string;
+  serviceType: string;
 }
 
 export async function saveUser(data: RegistrationData) {
@@ -34,46 +34,44 @@ export async function getUser(email: string) {
 
 export async function getUserPhone(email: string) {
   try {
-    const key = `phone:${email}`;
-    const phone = await redis.get(key);
-    return phone ? JSON.parse(phone) : null;
+    const userData = await redis.hgetall(`user:${email}`);
+    if (!userData.phone) return null;
+
+    return {
+      phone: userData.phone,
+      countryCode: userData.countryCode,
+      serviceType: userData.serviceType,
+    };
   } catch (error) {
-    console.error('Error al obtener teléfono:', error);
-    return null;
+    console.error('Error al obtener teléfono de Redis:', error);
+    throw error;
   }
 }
 
 export async function saveUserPhone(email: string, phoneData: PhoneData) {
   try {
-    const key = `phone:${email}`;
-    await redis.set(key, JSON.stringify(phoneData));
-    // Agregar un TTL de 24 horas para evitar datos huérfanos
-    await redis.expire(key, 24 * 60 * 60);
+    await redis.hset(`user:${email}`, {
+      phone: phoneData.phone,
+      countryCode: phoneData.countryCode,
+      serviceType: phoneData.serviceType,
+    });
     return true;
   } catch (error) {
-    console.error('Error al guardar teléfono:', error);
-    throw new Error('Error al guardar el teléfono en Redis');
+    console.error('Error al guardar teléfono en Redis:', error);
+    throw error;
   }
 }
 
 export async function deleteUserPhone(email: string) {
   try {
-    await redis.del(`phone:${email}`);
+    await redis.hdel(`user:${email}`, 'phone', 'countryCode', 'serviceType');
     return true;
   } catch (error) {
-    console.error('Error al eliminar teléfono:', error);
-    throw new Error('Error al eliminar el teléfono de Redis');
+    console.error('Error al eliminar teléfono de Redis:', error);
+    throw error;
   }
 }
 
 export async function updateUserPhone(email: string, phoneData: PhoneData) {
-  try {
-    const key = `phone:${email}`;
-    await redis.set(key, JSON.stringify(phoneData));
-    await redis.expire(key, 24 * 60 * 60);
-    return true;
-  } catch (error) {
-    console.error('Error al actualizar teléfono:', error);
-    throw new Error('Error al actualizar el teléfono en Redis');
-  }
+  return await saveUserPhone(email, phoneData);
 }

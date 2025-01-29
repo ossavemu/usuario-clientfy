@@ -148,6 +148,7 @@ export function DashboardSlide({
 }: DashboardSlideProps) {
   const [isVerifyingBot, setIsVerifyingBot] = useState(true);
   const [canCreateBot, setCanCreateBot] = useState(false);
+  const [hasExistingBot, setHasExistingBot] = useState(false);
   const [hasCheckedData, setHasCheckedData] = useState(false);
 
   useEffect(() => {
@@ -158,54 +159,68 @@ export function DashboardSlide({
       }
 
       try {
-        // Obtener datos del teléfono solo si no los tenemos ya
-        if (!data.phone || !data.countryCode) {
-          const phoneResponse = await fetch(`/api/phone?email=${userEmail}`);
-          const phoneData = phoneResponse.ok
-            ? await phoneResponse.json()
-            : null;
+        // Verificar teléfono en Redis
+        const phoneResponse = await fetch(`/api/phone?email=${userEmail}`);
+        const phoneData = await phoneResponse.json();
+        if (phoneData.success && phoneData.phone) {
+          onUpdate({
+            phone: phoneData.phone.phone,
+            countryCode: phoneData.phone.countryCode,
+            serviceType: phoneData.phone.serviceType,
+          });
 
-          if (phoneData?.phone) {
-            onUpdate({
-              phone: phoneData.phone.phone,
-              countryCode: phoneData.phone.countryCode,
-              serviceType: phoneData.phone.serviceType,
-            });
-
-            // Solo verificamos el prompt si tenemos datos del teléfono
-            const phoneNumber =
-              `${phoneData.phone.countryCode}${phoneData.phone.phone}`.replace(
-                /\+/g,
-                ''
-              );
-
-            let promptExists = false;
-            if (!data.prompt) {
-              const promptResponse = await fetch(
-                `/api/prompt?phoneNumber=${phoneNumber}`
-              );
-              const promptData = promptResponse.ok
-                ? await promptResponse.json()
-                : null;
-
-              if (promptData?.prompt) {
-                onUpdate({ prompt: promptData.prompt });
-                promptExists = true;
-              }
-            }
-
-            setCanCreateBot(
-              Boolean(phoneData.phone && (promptExists || data.prompt))
-            );
-          }
-        } else {
-          // Si ya tenemos teléfono, actualizamos canCreateBot basado en los datos existentes
-          setCanCreateBot(
-            Boolean(data.phone && data.countryCode && data.prompt)
+          // Verificar instancia existente
+          const instanceResponse = await fetch(
+            `/api/instance/verify?email=${userEmail}`
           );
+          const instanceData = await instanceResponse.json();
+          setHasExistingBot(instanceData.exists && instanceData.isActive);
+
+          // Se puede crear bot si hay teléfono y no hay bot existente
+          setCanCreateBot(!instanceData.exists);
+        }
+
+        // Solo verificar S3 si hay teléfono
+        if (phoneData.phone) {
+          const phoneNumber =
+            `${phoneData.phone.countryCode}${phoneData.phone.phone}`.replace(
+              /\+/g,
+              ''
+            );
+
+          // Verificar prompt
+          const promptResponse = await fetch(
+            `/api/prompt?phoneNumber=${phoneNumber}`
+          );
+          const promptData = await promptResponse.json();
+          const hasPrompt = promptData.success && promptData.prompt;
+
+          // Verificar imágenes
+          const imagesResponse = await fetch(
+            `/api/images?phoneNumber=${phoneNumber}`
+          );
+          const imagesData = await imagesResponse.json();
+          const hasImages = imagesData.success && imagesData.images?.length > 0;
+
+          // Verificar archivos de entrenamiento
+          const trainingResponse = await fetch(
+            `/api/training-files?phoneNumber=${phoneNumber}`
+          );
+          const trainingData = await trainingResponse.json();
+          const hasTraining =
+            trainingData.success && trainingData.files?.length > 0;
+
+          // Actualizar el estado con los datos reales
+          onUpdate({
+            prompt: hasPrompt ? promptData.prompt : data.prompt,
+            images: hasImages ? imagesData.images : data.images,
+            trainingFiles: hasTraining
+              ? trainingData.files
+              : data.trainingFiles,
+          });
         }
       } catch (error) {
-        console.error('Error al verificar datos del bot:', error);
+        console.error('Error al verificar datos:', error);
       } finally {
         setIsVerifyingBot(false);
         setHasCheckedData(true);
@@ -213,14 +228,7 @@ export function DashboardSlide({
     };
 
     verifyBotData();
-  }, [
-    userEmail,
-    data.phone,
-    data.countryCode,
-    data.prompt,
-    hasCheckedData,
-    onUpdate,
-  ]);
+  }, [userEmail, hasCheckedData, onUpdate]);
 
   // Función para obtener el saludo según la hora
   const getGreeting = () => {
@@ -376,6 +384,8 @@ export function DashboardSlide({
           icon={
             isVerifyingBot ? (
               <Loader2 className="w-5 h-5 animate-spin" />
+            ) : hasExistingBot ? (
+              <Bot className="w-5 h-5" />
             ) : (
               <Rocket className="w-5 h-5" />
             )
@@ -383,19 +393,27 @@ export function DashboardSlide({
           title={
             isVerifyingBot
               ? 'Verificando información...'
+              : hasExistingBot
+              ? 'Revisa tu Asistente Inteligente'
               : canCreateBot
               ? '¡Crear tu Asistente Ahora!'
               : 'Crear Asistente (Completa los pasos requeridos)'
           }
           description=""
           status={
-            isVerifyingBot ? 'pending' : canCreateBot ? 'special' : 'pending'
+            isVerifyingBot
+              ? 'pending'
+              : hasExistingBot
+              ? 'completed'
+              : canCreateBot
+              ? 'special'
+              : 'pending'
           }
           onClick={() => {
-            if (!isVerifyingBot && canCreateBot) {
-              onNavigate(5);
-            } else if (!isVerifyingBot) {
-              if (!hasPhone) {
+            if (!isVerifyingBot) {
+              if (hasExistingBot || canCreateBot) {
+                onNavigate(5);
+              } else if (!hasPhone) {
                 onNavigate(1);
               } else if (!hasPrompt) {
                 onNavigate(2);

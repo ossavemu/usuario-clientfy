@@ -8,6 +8,7 @@ interface ConfirmDeleteModalProps {
   title: string;
   message: string;
   itemName: string;
+  confirmButtonText?: string;
 }
 
 export function ConfirmDeleteModal({
@@ -17,6 +18,7 @@ export function ConfirmDeleteModal({
   title,
   message,
   itemName,
+  confirmButtonText = 'Eliminar',
 }: ConfirmDeleteModalProps) {
   if (!isOpen) return null;
 
@@ -59,7 +61,7 @@ export function ConfirmDeleteModal({
                 onClose();
               }}
             >
-              Eliminar
+              {confirmButtonText}
             </Button>
           </div>
         </div>
