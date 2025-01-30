@@ -220,7 +220,7 @@ export function CreateBotStep({
           'whatsapp-qr'
         ) as HTMLImageElement;
         if (qrImage) {
-          qrImage.src = `http://${instanceIp}:3008?t=${Date.now()}`;
+          qrImage.src = `/api/qr?ip=${instanceIp}&t=${Date.now()}`;
         }
       }, 30000);
 
@@ -254,7 +254,7 @@ export function CreateBotStep({
       if (!instanceIp) return;
 
       try {
-        const response = await fetch(`http://${instanceIp}:3008`);
+        const response = await fetch(`/api/qr?ip=${instanceIp}`);
         if (response.status === 404) {
           setIsLinked(true);
           toast.success('WhatsApp vinculado correctamente');
@@ -277,7 +277,7 @@ export function CreateBotStep({
     if (retryQR && instanceIp) {
       const qrInterval = setInterval(async () => {
         try {
-          const response = await fetch(`http://${instanceIp}:3008`);
+          const response = await fetch(`/api/qr?ip=${instanceIp}`);
           if (response.ok) {
             setIsLinked(false);
             setRetryQR(false);
@@ -540,7 +540,7 @@ export function CreateBotStep({
                 </p>
                 <div className="flex flex-col gap-2 mt-4">
                   <a
-                    href={`http://${instanceIp}:5432/panel`}
+                    href={`/api/proxy/panel?ip=${instanceIp}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-purple-600 hover:underline text-sm"
@@ -551,14 +551,19 @@ export function CreateBotStep({
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setRetryQR(true);
-                      setIsLinked(false);
-                      toast.info('Buscando nuevo código QR...');
+                      const qrImage = document.getElementById(
+                        'whatsapp-qr'
+                      ) as HTMLImageElement;
+                      if (qrImage) {
+                        qrImage.src = `/api/qr?ip=${instanceIp}&t=${Date.now()}`;
+                        setIsLinked(false);
+                        toast.info('Actualizando código QR...');
+                      }
                     }}
                     className="text-purple-600 border-purple-600 hover:bg-purple-50"
                   >
                     <RotateCw className="w-4 h-4 mr-2" />
-                    Generar nuevo QR
+                    Consultar QR
                   </Button>
                 </div>
               </div>
@@ -566,7 +571,7 @@ export function CreateBotStep({
               <div className="w-full h-fit flex items-center justify-center">
                 <img
                   id="whatsapp-qr"
-                  src={`http://${instanceIp}:3008`}
+                  src={`/api/qr?ip=${instanceIp}`}
                   alt="WhatsApp QR"
                   className="max-w-full max-h-full"
                   onError={() => {
@@ -595,7 +600,7 @@ export function CreateBotStep({
                   <p className="text-gray-700">
                     Una vez conectado, podrás administrar tu asistente desde el{' '}
                     <a
-                      href={`http://${instanceIp}:5432/panel`}
+                      href={`${instanceIp}:5432/panel`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-purple-600 hover:underline font-medium"
