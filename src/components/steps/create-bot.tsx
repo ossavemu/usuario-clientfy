@@ -600,7 +600,7 @@ export function CreateBotStep({
                   <p className="text-gray-700">
                     Una vez conectado, podrás administrar tu asistente desde el{' '}
                     <a
-                      href={`${instanceIp}:5432/panel`}
+                      href={`http://${instanceIp}:5432/panel`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-purple-600 hover:underline font-medium"
