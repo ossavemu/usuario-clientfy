@@ -64,6 +64,7 @@ export function CreateBotStep({
   );
   const [showRelaunchButton, setShowRelaunchButton] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [retryQR, setRetryQR] = useState(false);
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const qrUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -270,6 +271,26 @@ export function CreateBotStep({
       return () => clearInterval(interval);
     }
   }, [instanceIp, isLinked]);
+
+  // Efecto para reintentar obtener el QR
+  useEffect(() => {
+    if (retryQR && instanceIp) {
+      const qrInterval = setInterval(async () => {
+        try {
+          const response = await fetch(`http://${instanceIp}:3008`);
+          if (response.ok) {
+            setIsLinked(false);
+            setRetryQR(false);
+            toast.info('Nuevo código QR generado');
+          }
+        } catch (error) {
+          console.error('Error verificando QR:', error);
+        }
+      }, 30000);
+
+      return () => clearInterval(qrInterval);
+    }
+  }, [retryQR, instanceIp]);
 
   const crearInstancia = async (requestBody: {
     numberphone: string;
@@ -517,14 +538,29 @@ export function CreateBotStep({
                 <p className="mt-4 text-gray-500 text-lg">
                   WhatsApp ya está vinculado
                 </p>
-                <a
-                  href={`http://${instanceIp}:5432/panel`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 text-purple-600 hover:underline"
-                >
-                  Ir al Panel de Control
-                </a>
+                <div className="flex flex-col gap-2 mt-4">
+                  <a
+                    href={`http://${instanceIp}:5432/panel`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-purple-600 hover:underline text-sm"
+                  >
+                    Ir al Panel de Control
+                  </a>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setRetryQR(true);
+                      setIsLinked(false);
+                      toast.info('Buscando nuevo código QR...');
+                    }}
+                    className="text-purple-600 border-purple-600 hover:bg-purple-50"
+                  >
+                    <RotateCw className="w-4 h-4 mr-2" />
+                    Generar nuevo QR
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="w-full h-fit flex items-center justify-center">
