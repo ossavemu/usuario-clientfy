@@ -247,6 +247,30 @@ export function CreateBotStep({
     setShowRelaunchButton(Boolean(instanceIp));
   }, [instanceIp]);
 
+  // Efecto para verificar el estado de vinculación
+  useEffect(() => {
+    const checkLinkStatus = async () => {
+      if (!instanceIp) return;
+
+      try {
+        const response = await fetch(`http://${instanceIp}:3008`);
+        if (response.status === 404) {
+          setIsLinked(true);
+          toast.success('WhatsApp vinculado correctamente');
+        } else {
+          setIsLinked(false);
+        }
+      } catch (error) {
+        console.error('Error verificando estado de QR:', error);
+      }
+    };
+
+    if (instanceIp && !isLinked) {
+      const interval = setInterval(checkLinkStatus, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [instanceIp, isLinked]);
+
   const crearInstancia = async (requestBody: {
     numberphone: string;
     provider?: string;
@@ -511,9 +535,7 @@ export function CreateBotStep({
                   className="max-w-full max-h-full"
                   onError={() => {
                     setIsLinked(true);
-                    toast.info(
-                      'No se pudo cargar el QR, WhatsApp posiblemente ya está vinculado'
-                    );
+                    toast.info('Vinculación detectada');
                   }}
                 />
               </div>
