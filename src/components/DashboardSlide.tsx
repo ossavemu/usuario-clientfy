@@ -228,7 +228,14 @@ export function DashboardSlide({
     };
 
     verifyBotData();
-  }, [userEmail, hasCheckedData, onUpdate]);
+  }, [
+    userEmail,
+    hasCheckedData,
+    onUpdate,
+    data.prompt,
+    data.images,
+    data.trainingFiles,
+  ]);
 
   // Función para obtener el saludo según la hora
   const getGreeting = () => {
