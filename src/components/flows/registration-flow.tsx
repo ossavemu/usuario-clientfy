@@ -228,6 +228,7 @@ export default function RegistrationFlow() {
         return (
           <CreateBotStep
             phoneNumber={formData.phone}
+            countryCode={formData.countryCode}
             userEmail={userEmail || ''}
             companyName={formData.companyName}
             existingInstance={existingInstance}

@@ -8,6 +8,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const payload = body;
+    console.log(payload);
     const email = body.email;
 
     const response = await fetch(`${ORQUESTA_URL}/api/instance/create`, {

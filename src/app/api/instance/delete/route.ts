@@ -9,12 +9,12 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Email requerido' }, { status: 400 });
     }
 
-    // Borrar la instancia de Redis
+    // Borrar el registro de la instancia en Redis
     await redis.del(`instance:${email}`);
 
     return NextResponse.json({
       success: true,
-      message: 'Instancia eliminada correctamente',
+      message: 'Instancia eliminada y registro borrado de Redis',
     });
   } catch (error) {
     console.error('Error al eliminar la instancia:', error);

@@ -24,6 +24,7 @@ interface InstanceInfo {
 
 interface CreateBotStepProps {
   phoneNumber: string;
+  countryCode: string;
   userEmail: string;
   companyName: string;
   existingInstance?: {
@@ -48,6 +49,7 @@ interface InstanceStatus {
 
 export function CreateBotStep({
   phoneNumber,
+  countryCode,
   userEmail,
   companyName,
   existingInstance,
@@ -55,8 +57,11 @@ export function CreateBotStep({
   const [isCreating, setIsCreating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [message, setMessage] = useState<string>('Creando el bot...');
-  const [enableAppointments, setEnableAppointments] = useState(false);
-  const [enableAutoInvite, setEnableAutoInvite] = useState(false);
+  const [enableVirtualAppointments, setEnableVirtualAppointments] =
+    useState(true);
+  const [enableInPersonAppointments, setEnableInPersonAppointments] =
+    useState(true);
+  const [enableAutoInvite, setEnableAutoInvite] = useState(true);
   const [instanceIp, setInstanceIp] = useState<string | null>(
     existingInstance?.ip || null
   );
@@ -120,7 +125,6 @@ export function CreateBotStep({
       const startTime = Date.now();
       let lastStatus = '';
       let hasCompleted = false;
-      let hasSeenConfiguring = false;
       let lastProgressUpdate = 0;
 
       pollIntervalRef.current = setInterval(async () => {
@@ -164,18 +168,15 @@ export function CreateBotStep({
                   break;
                 case 'configuring':
                   setMessage('Configurando asistente...');
-                  hasSeenConfiguring = true;
                   break;
                 case 'completed':
-                  if (hasSeenConfiguring && elapsedSeconds >= 120) {
-                    if (data.instanceInfo?.ip) {
-                      const ip = data.instanceInfo.ip;
-                      setInstanceIp(ip);
-                      await saveInstanceToRedis(ip);
-                      toast.success('¡Asistente creado exitosamente!');
-                      setMessage('Escanea el código QR con WhatsApp');
-                      hasCompleted = true;
-                    }
+                  if (data.instanceInfo?.ip) {
+                    const ip = data.instanceInfo.ip;
+                    setInstanceIp(ip);
+                    await saveInstanceToRedis(ip);
+                    toast.success('¡Asistente creado exitosamente!');
+                    setMessage('Escanea el código QR con WhatsApp');
+                    hasCompleted = true;
                   } else {
                     setMessage('Verificando la configuración...');
                   }
@@ -217,12 +218,12 @@ export function CreateBotStep({
   useEffect(() => {
     if (instanceIp) {
       qrUpdateIntervalRef.current = setInterval(() => {
-        // Forzar actualización del QR
+        // Forzar actualización del QR usando el puerto 3008
         const qrImage = document.getElementById(
           'whatsapp-qr'
         ) as HTMLImageElement;
         if (qrImage) {
-          qrImage.src = `/api/qr?ip=${instanceIp}&t=${Date.now()}`;
+          qrImage.src = `http://${instanceIp}:3008/qr?t=${Date.now()}`;
         }
       }, 30000);
 
@@ -296,8 +297,8 @@ export function CreateBotStep({
 
   const crearInstancia = async (requestBody: {
     numberphone: string;
-    provider?: string;
-    enableAppointments: boolean;
+    enableVirtualAppointments: boolean;
+    enableInPersonAppointments: boolean;
     enableAutoInvite: boolean;
   }) => {
     try {
@@ -310,7 +311,9 @@ export function CreateBotStep({
           ...requestBody,
           email: userEmail,
           companyName: companyName,
-          numberphone: `57${requestBody.numberphone}`,
+          numberphone: `${countryCode.replace('+', '')}${
+            requestBody.numberphone
+          }`,
           provider: 'baileys',
         }),
       });
@@ -332,7 +335,8 @@ export function CreateBotStep({
 
     const requestBody = {
       numberphone: phoneNumber,
-      enableAppointments,
+      enableVirtualAppointments,
+      enableInPersonAppointments,
       enableAutoInvite,
     };
 
@@ -428,22 +432,47 @@ export function CreateBotStep({
                 <div className="flex items-center space-x-3">
                   <Calendar className="w-5 h-5 text-purple-600" />
                   <div className="text-left">
-                    <Label htmlFor="appointments" className="font-medium">
-                      Agendar Citas
+                    <Label
+                      htmlFor="virtualAppointments"
+                      className="font-medium"
+                    >
+                      Agendar citas virtuales
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Permite a los clientes programar citas automáticamente
+                      Permite a los clientes programar citas virtualmente
                     </p>
                   </div>
                 </div>
                 <Switch
-                  id="appointments"
-                  checked={enableAppointments}
-                  onCheckedChange={setEnableAppointments}
+                  id="virtualAppointments"
+                  checked={enableVirtualAppointments}
+                  onCheckedChange={setEnableVirtualAppointments}
                 />
               </div>
             </Card>
-
+            <Card className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Calendar className="w-5 h-5 text-purple-600" />
+                  <div className="text-left">
+                    <Label
+                      htmlFor="inPersonAppointments"
+                      className="font-medium"
+                    >
+                      Agendar citas presenciales
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      Permite a los clientes programar citas en persona
+                    </p>
+                  </div>
+                </div>
+                <Switch
+                  id="inPersonAppointments"
+                  checked={enableInPersonAppointments}
+                  onCheckedChange={setEnableInPersonAppointments}
+                />
+              </div>
+            </Card>
             <Card className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -533,7 +562,7 @@ export function CreateBotStep({
                     {formatTime(timeLeft || 0)}
                   </p>
                 </div>
-                <p className="text-xl font-medium">{message}</p>
+                <p className="text-md font-medium">{message}</p>
               </div>
             ) : isLinked ? (
               <div className="flex flex-col items-center justify-center h-full">
@@ -543,7 +572,7 @@ export function CreateBotStep({
                 </p>
                 <div className="flex flex-col gap-2 mt-4">
                   <a
-                    href={`/api/proxy/panel?ip=${instanceIp}`}
+                    href={`http://${instanceIp}:5432/panel`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-purple-600 hover:underline text-sm"
@@ -574,7 +603,7 @@ export function CreateBotStep({
               <div className="w-full h-fit flex items-center justify-center">
                 <img
                   id="whatsapp-qr"
-                  src={`/api/qr?ip=${instanceIp}`}
+                  src={`http://${instanceIp}:3008/qr`}
                   alt="WhatsApp QR"
                   className="max-w-full max-h-full"
                   onError={() => {

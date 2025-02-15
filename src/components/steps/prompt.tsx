@@ -230,7 +230,7 @@ export function PromptStep({
             onChange={handlePromptChange}
             placeholder={
               data.companyName
-                ? `${requiredPrefix}. Ejemplo: Eres un asistente de la empresa ${data.companyName}. Tu objetivo es maximizar las ventas identificando las necesidades del cliente y recomendando los productos más adecuados...`
+                ? `Ejemplo: Eres un asistente de la empresa ${data.companyName}. Tu objetivo es maximizar las ventas identificando las necesidades del cliente y recomendando los productos más adecuados...`
                 : 'Escribe tu prompt'
             }
             className="min-h-[200px] hide-scrollbar"
