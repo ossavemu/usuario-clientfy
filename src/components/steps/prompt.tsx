@@ -8,10 +8,10 @@ import {
 } from '@/components/ui/dialog';
 import { StepNavigation } from '@/components/ui/step-navigation';
 import { Textarea } from '@/components/ui/textarea';
+import { type RegistrationData } from '@/types/registration';
 import { RotateCcw, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { type RegistrationData } from '@/types/registration';
 
 interface PromptStepProps {
   data: RegistrationData;
@@ -32,6 +32,26 @@ export function PromptStep({
   const [existingPrompt, setExistingPrompt] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(true);
   const [hasAttemptedLoad, setHasAttemptedLoad] = useState(false);
+
+  const requiredPrefix = data.companyName
+    ? `Eres un asistente de la empresa ${data.companyName}`
+    : 'Eres un asistente de la empresa';
+
+  const handlePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    if (
+      value.length < requiredPrefix.length ||
+      !value.startsWith(requiredPrefix)
+    ) {
+      onUpdate({
+        prompt:
+          requiredPrefix +
+          (value.length > 0 ? value.slice(requiredPrefix.length) : ''),
+      });
+    } else {
+      onUpdate({ prompt: value });
+    }
+  };
 
   // Cargar prompt existente solo una vez al montar el componente
   useEffect(() => {
@@ -105,7 +125,6 @@ export function PromptStep({
       toast.error('Por favor, escribe un prompt antes de mejorarlo');
       return;
     }
-
     setIsLoading(true);
     try {
       setOriginalPrompt(data.prompt);
@@ -120,7 +139,12 @@ export function PromptStep({
       const result = await response.json();
 
       if (result.success && result.improvedPrompt) {
-        onUpdate({ prompt: result.improvedPrompt });
+        let improvedPrompt = result.improvedPrompt;
+        // Asegurar que el prompt mejorado inicie con el prefijo requerido
+        if (!improvedPrompt.startsWith(requiredPrefix)) {
+          improvedPrompt = requiredPrefix + improvedPrompt;
+        }
+        onUpdate({ prompt: improvedPrompt });
         toast.success('Prompt mejorado exitosamente');
       } else {
         throw new Error(result.error);
@@ -203,8 +227,12 @@ export function PromptStep({
         <div className="space-y-4">
           <Textarea
             value={data.prompt}
-            onChange={(e) => onUpdate({ prompt: e.target.value })}
-            placeholder="Ejemplo: Eres un vendedor experto en gafas de sol de OpticaVision. Tu objetivo es maximizar las ventas identificando las necesidades del cliente y recomendando los productos más adecuados..."
+            onChange={handlePromptChange}
+            placeholder={
+              data.companyName
+                ? `${requiredPrefix}. Ejemplo: Eres un asistente de la empresa ${data.companyName}. Tu objetivo es maximizar las ventas identificando las necesidades del cliente y recomendando los productos más adecuados...`
+                : 'Escribe tu prompt'
+            }
             className="min-h-[200px] hide-scrollbar"
             disabled={isLoading}
           />

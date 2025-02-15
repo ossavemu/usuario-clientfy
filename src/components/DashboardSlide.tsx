@@ -348,6 +348,12 @@ export function DashboardSlide({
             <span className="font-medium">{formattedPhone}</span>
           </div>
         )}
+        {data.companyName && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-600">Empresa:</span>
+            <span className="font-medium text-xs">{data.companyName}</span>
+          </div>
+        )}
       </motion.div>
 
       <div className="space-y-3">

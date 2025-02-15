@@ -68,7 +68,13 @@ export function UserInfoStep({
     try {
       if (!isLogin) {
         // Validaciones de registro
-        if (!data.name || !data.email || !servicePassword || !userPassword) {
+        if (
+          !data.name ||
+          !data.companyName ||
+          !data.email ||
+          !servicePassword ||
+          !userPassword
+        ) {
           toast.error('Todos los campos son requeridos');
           throw new Error('Todos los campos son requeridos');
         }
@@ -105,6 +111,7 @@ export function UserInfoStep({
           },
           body: JSON.stringify({
             name: data.name,
+            companyName: data.companyName,
             email: data.email,
             password: {
               service: servicePassword,
