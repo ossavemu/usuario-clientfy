@@ -12,6 +12,7 @@ function AuthContent() {
   const isLogin = searchParams.get('mode') === 'login';
   const [formData, setFormData] = useState<RegistrationData>({
     name: '',
+    companyName: '',
     email: '',
     password: '',
     phone: '',

@@ -25,6 +25,7 @@ interface InstanceInfo {
 interface CreateBotStepProps {
   phoneNumber: string;
   userEmail: string;
+  companyName: string;
   existingInstance?: {
     exists: boolean;
     ip: string | null;
@@ -48,6 +49,7 @@ interface InstanceStatus {
 export function CreateBotStep({
   phoneNumber,
   userEmail,
+  companyName,
   existingInstance,
 }: CreateBotStepProps) {
   const [isCreating, setIsCreating] = useState(false);
@@ -307,6 +309,7 @@ export function CreateBotStep({
         body: JSON.stringify({
           ...requestBody,
           email: userEmail,
+          companyName: companyName,
           numberphone: `57${requestBody.numberphone}`,
           provider: 'baileys',
         }),

@@ -31,6 +31,7 @@ export default function RegistrationFlow() {
   const [isLoadingInitialData, setIsLoadingInitialData] = useState(true);
   const [formData, setFormData] = useState<RegistrationData>({
     name: '',
+    companyName: '',
     email: '',
     password: '',
     phone: '',
@@ -228,6 +229,7 @@ export default function RegistrationFlow() {
           <CreateBotStep
             phoneNumber={formData.phone}
             userEmail={userEmail || ''}
+            companyName={formData.companyName}
             existingInstance={existingInstance}
           />
         );

@@ -6,6 +6,7 @@ export interface TrainingFile {
 
 export interface RegistrationData {
   name: string;
+  companyName: string;
   email: string;
   password:
     | string

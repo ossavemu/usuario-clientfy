@@ -31,6 +31,7 @@ export function UserInfoStep({
   const [isLogin, setIsLogin] = useState(defaultMode === 'login');
   const [servicePassword, setServicePassword] = useState('');
   const [userPassword, setUserPassword] = useState('');
+  const [isUserPasswordFocused, setIsUserPasswordFocused] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
@@ -209,10 +210,25 @@ export function UserInfoStep({
                   required
                 />
               </div>
+              <div className="space-y-2">
+                <Label htmlFor="companyName">Nombre de la empresa</Label>
+                <Input
+                  id="companyName"
+                  value={data.companyName}
+                  onChange={(e) => onUpdate({ companyName: e.target.value })}
+                  placeholder="Nombre de tu empresa"
+                  required
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="email">
+                Correo electrónico{' '}
+                <span className="text-xs text-gray-500 mt-1">
+                  (preferiblemente de la empresa)
+                </span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -246,9 +262,6 @@ export function UserInfoStep({
                   )}
                 </button>
               </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Ingrese la contraseña proporcionada por el servicio
-              </p>
             </div>
 
             <div className="space-y-2">
@@ -259,6 +272,8 @@ export function UserInfoStep({
                   type={showUserPassword ? 'text' : 'password'}
                   value={userPassword}
                   onChange={(e) => setUserPassword(e.target.value)}
+                  onFocus={() => setIsUserPasswordFocused(true)}
+                  onBlur={() => setIsUserPasswordFocused(false)}
                   placeholder="Crea una contraseña segura"
                   required
                 />
@@ -270,32 +285,42 @@ export function UserInfoStep({
                   {showUserPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
-              <div className="space-y-2 mt-2">
-                <div className="flex items-center space-x-2 text-sm">
-                  {passwordValidation.minLength ? (
-                    <Check size={16} className="text-green-500" />
-                  ) : (
-                    <X size={16} className="text-red-500" />
-                  )}
-                  <span>Mínimo 8 caracteres</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  {passwordValidation.hasLetter ? (
-                    <Check size={16} className="text-green-500" />
-                  ) : (
-                    <X size={16} className="text-red-500" />
-                  )}
-                  <span>Al menos una letra</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm">
-                  {passwordValidation.hasNumber ? (
-                    <Check size={16} className="text-green-500" />
-                  ) : (
-                    <X size={16} className="text-red-500" />
-                  )}
-                  <span>Al menos un número</span>
-                </div>
-              </div>
+              <AnimatePresence>
+                {(isUserPasswordFocused || userPassword.length > 0) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex justify-center items-center space-x-4 mt-2 pt-2"
+                  >
+                    <div className="flex items-center space-x-1 text-xs">
+                      {passwordValidation.minLength ? (
+                        <Check size={16} className="text-green-500" />
+                      ) : (
+                        <X size={16} className="text-red-500" />
+                      )}
+                      <span>Mínimo 8 caracteres</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-xs">
+                      {passwordValidation.hasLetter ? (
+                        <Check size={16} className="text-green-500" />
+                      ) : (
+                        <X size={16} className="text-red-500" />
+                      )}
+                      <span>Al menos una letra</span>
+                    </div>
+                    <div className="flex items-center space-x-1 text-xs">
+                      {passwordValidation.hasNumber ? (
+                        <Check size={16} className="text-green-500" />
+                      ) : (
+                        <X size={16} className="text-red-500" />
+                      )}
+                      <span>Al menos un número</span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <AnimatePresence>
@@ -352,6 +377,8 @@ export function UserInfoStep({
                   type={showUserPassword ? 'text' : 'password'}
                   value={userPassword}
                   onChange={(e) => setUserPassword(e.target.value)}
+                  onFocus={() => setIsUserPasswordFocused(true)}
+                  onBlur={() => setIsUserPasswordFocused(false)}
                   placeholder="Tu contraseña"
                   required
                 />

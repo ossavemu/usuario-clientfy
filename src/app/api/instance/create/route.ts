@@ -1,21 +1,22 @@
 import { setInstanceIp } from '@/lib/redis';
 import { NextResponse } from 'next/server';
 
-const API_URL = 'http://137.184.34.79:3000/api';
+const ORQUESTA_URL = process.env.ORQUESTA_URL;
 const API_KEY = process.env.SECRET_KEY;
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { email, ...requestBody } = body;
+    const payload = body;
+    const email = body.email;
 
-    const response = await fetch(`${API_URL}/instance/create`, {
+    const response = await fetch(`${ORQUESTA_URL}/api/instance/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': API_KEY || '2rgIgH4GXmVzRsr8juvS3dDTxr3',
+        'x-api-key': API_KEY!,
       },
-      body: JSON.stringify(requestBody),
+      body: JSON.stringify(payload),
     });
 
     const data = await response.json();

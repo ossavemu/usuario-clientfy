@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     // Validar datos requeridos
     if (
       !data.name ||
+      !data.companyName ||
       !data.email ||
       !data.password?.service ||
       !data.password?.user
@@ -54,6 +55,7 @@ export async function POST(request: Request) {
     // Crear usuario con la estructura completa
     const user = {
       name: data.name,
+      companyName: data.companyName,
       email: data.email,
       password: hashedPassword,
       phone: data.phone || '',
