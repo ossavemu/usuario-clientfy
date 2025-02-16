@@ -9,6 +9,14 @@ interface ConfirmDeleteModalProps {
   message: string;
   itemName: string;
   confirmButtonText?: string;
+  customIcon?: React.ReactNode;
+  confirmVariant?:
+    | 'link'
+    | 'default'
+    | 'destructive'
+    | 'outline'
+    | 'secondary'
+    | 'ghost';
 }
 
 export function ConfirmDeleteModal({
@@ -19,13 +27,15 @@ export function ConfirmDeleteModal({
   message,
   itemName,
   confirmButtonText = 'Eliminar',
+  customIcon,
+  confirmVariant,
 }: ConfirmDeleteModalProps) {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Overlay */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/70" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md mx-4 p-6">
@@ -41,8 +51,18 @@ export function ConfirmDeleteModal({
         </div>
 
         <div className="flex flex-col items-center text-center">
-          <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
-            <Trash2 className="h-6 w-6 text-red-600" />
+          <div
+            className={`h-12 w-12 rounded-full flex items-center justify-center mb-4 ${
+              customIcon
+                ? 'bg-transparent border border-purple-600'
+                : 'bg-red-100'
+            }`}
+          >
+            {customIcon ? (
+              customIcon
+            ) : (
+              <Trash2 className="h-6 w-6 text-red-600" />
+            )}
           </div>
 
           <h3 className="text-lg font-semibold mb-2">{title}</h3>
@@ -54,7 +74,7 @@ export function ConfirmDeleteModal({
               Cancelar
             </Button>
             <Button
-              variant="destructive"
+              variant={confirmVariant ? confirmVariant : 'destructive'}
               className="flex-1"
               onClick={() => {
                 onConfirm();

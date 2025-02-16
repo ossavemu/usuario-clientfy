@@ -5,8 +5,9 @@ import { Card } from '@/components/ui/card';
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import { ZoomIcon } from '@/components/ui/zoom-icon';
 import { motion } from 'framer-motion';
-import { Bot, Calendar, QrCode, RotateCw, Users } from 'lucide-react';
+import { Bot, Calendar, QrCode, RotateCw, Users, Zap } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -72,6 +73,8 @@ export function CreateBotStep({
   const [showRelaunchButton, setShowRelaunchButton] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [retryQR, setRetryQR] = useState(false);
+  const [showConfirmActivationModal, setShowConfirmActivationModal] =
+    useState(false);
 
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const qrUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -419,7 +422,7 @@ export function CreateBotStep({
         <>
           <Bot className="w-16 h-16 mx-auto text-purple-600" />
           <h3 className="text-xl font-semibold">
-            ¡Configura tu Asistente Inteligente!
+            ¡Configura tu Asistente Virtual!
           </h3>
           <p className="text-muted-foreground mb-6">
             Selecciona las funciones que deseas activar en tu asistente antes de
@@ -430,16 +433,17 @@ export function CreateBotStep({
             <Card className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <Calendar className="w-5 h-5 text-purple-600" />
-                  <div className="text-left">
+                  <ZoomIcon className="w-10 h-10 -translate-x-1" />
+                  <div className="text-left -translate-x-[8px]">
                     <Label
                       htmlFor="virtualAppointments"
                       className="font-medium"
                     >
                       Agendar citas virtuales
                     </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Permite a los clientes programar citas virtualmente
+                    <p className="text-sm text-muted-foreground mr-8">
+                      Permite a los clientes programar citas virtuales y
+                      reuniones en la plataforma Zoom
                     </p>
                   </div>
                 </div>
@@ -461,8 +465,9 @@ export function CreateBotStep({
                     >
                       Agendar citas presenciales
                     </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Permite a los clientes programar citas en persona
+                    <p className="text-sm text-muted-foreground mr-8">
+                      Permite a los clientes programar citas presenciales en tu
+                      negocio
                     </p>
                   </div>
                 </div>
@@ -481,9 +486,9 @@ export function CreateBotStep({
                     <Label htmlFor="auto-invite" className="font-medium">
                       Seguimiento Automático
                     </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Dale seguimiento a tus clientes potenciales
-                      automáticamente
+                    <p className="text-sm text-muted-foreground mr-8">
+                      Da seguimiento automático a tus clientes potenciales y
+                      eleva tus ventas
                     </p>
                   </div>
                 </div>
@@ -496,8 +501,12 @@ export function CreateBotStep({
             </Card>
           </div>
 
-          <Button className="w-full mt-6" size="lg" onClick={handleCreateBot}>
-            Crear Asistente Inteligente
+          <Button
+            className="w-full mt-6"
+            size="lg"
+            onClick={() => setShowConfirmActivationModal(true)}
+          >
+            Crear Asistente Virtual
           </Button>
         </>
       ) : (
@@ -672,6 +681,24 @@ export function CreateBotStep({
         itemName="¡Esta acción no se puede deshacer!"
         confirmButtonText="Relanzar"
       />
+
+      {/* Modal de confirmación para activar características */}
+      {showConfirmActivationModal && (
+        <ConfirmDeleteModal
+          isOpen={showConfirmActivationModal}
+          onClose={() => setShowConfirmActivationModal(false)}
+          onConfirm={() => {
+            setShowConfirmActivationModal(false);
+            handleCreateBot();
+          }}
+          title="Confirmar Creación del Asistente"
+          message="¿Deseas proceder con la creación de tu asistente? Una vez creado, las configuraciones actuales se aplicarán de forma definitiva."
+          itemName="Si quieres cambiar las configuraciones, debes volver a crear el asistente."
+          confirmButtonText="Crear Asistente"
+          confirmVariant="default"
+          customIcon={<Zap className="w-8 h-8 text-purple-600" />}
+        />
+      )}
     </div>
   );
 }
