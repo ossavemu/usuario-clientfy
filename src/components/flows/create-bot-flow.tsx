@@ -64,8 +64,9 @@ export function CreateBotFlow({
         },
         body: JSON.stringify({
           email: userEmail,
-          phoneNumber,
+          numberphone: phoneNumber,
           companyName,
+          address: companyAddress,
           features: {
             virtualAppointments: enableVirtualAppointments,
             inPersonAppointments: enableInPersonAppointments,

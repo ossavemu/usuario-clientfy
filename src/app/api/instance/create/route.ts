@@ -6,10 +6,8 @@ const API_KEY = process.env.SECRET_KEY;
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const payload = body;
-    console.log(payload);
-    const email = body.email;
+    const { email, ...payload } = await request.json();
+    console.log({ email, ...payload });
 
     const response = await fetch(`${ORQUESTA_URL}/api/instance/create`, {
       method: 'POST',
@@ -17,13 +15,14 @@ export async function POST(request: Request) {
         'Content-Type': 'application/json',
         'x-api-key': API_KEY!,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ email, ...payload }),
     });
 
     const data = await response.json();
 
-    if (data.success && email && data.instanceInfo?.ip) {
-      await setInstanceIp(email, data.instanceInfo.ip);
+    const { success, instanceInfo } = data;
+    if (success && email && instanceInfo?.ip) {
+      await setInstanceIp(email, instanceInfo.ip);
     }
 
     return NextResponse.json(data);
