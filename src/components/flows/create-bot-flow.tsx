@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
 import { WhatsAppQR } from '@/components/ui/whatsapp-qr';
 import { useAddress } from '@/hooks/use-address';
+import { monitorInstanceStatus } from '@/lib/instance-status';
 import { Bot, QrCode, RotateCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -166,63 +167,45 @@ export function CreateBotFlow({
   };
 
   useEffect(() => {
-    let isPolling = false;
-    let pollInterval: NodeJS.Timeout | null = null;
+    let isMonitoring = false;
 
-    const stopPolling = () => {
-      isPolling = false;
-      if (pollInterval) {
-        clearInterval(pollInterval);
-        pollInterval = null;
-      }
-    };
+    const startMonitoring = async () => {
+      if (!isCreating || instanceIp || isMonitoring) return;
 
-    const checkStatus = async () => {
-      if (!isPolling || !isCreating || instanceIp) {
-        stopPolling();
-        return;
-      }
+      isMonitoring = true;
+      const cleanPhone = `${countryCode}${phoneNumber}`.replace(/\+/g, '');
 
       try {
-        const cleanPhone = `${countryCode}${phoneNumber}`.replace(/\+/g, '');
-        const response = await fetch(
-          `/api/instance/status?phone=${encodeURIComponent(cleanPhone)}`
+        await monitorInstanceStatus(
+          cleanPhone,
+          (instanceData) => {
+            setProgress(instanceData.progress);
+            setMessage(getStatusMessage(instanceData.status));
+
+            if (instanceData.instanceInfo?.ip) {
+              setInstanceIp(instanceData.instanceInfo.ip);
+            }
+          },
+          (error) => {
+            console.error('Error al monitorear estado:', error);
+            toast.error('Error al verificar el estado del asistente');
+            setIsCreating(false);
+          },
+          userEmail
         );
-        const data = await response.json();
-
-        // Si ya no estamos creando o ya tenemos IP, detener
-        if (!isCreating || instanceIp) {
-          stopPolling();
-          return;
-        }
-
-        if (data.success && data.data) {
-          const { status, progress, instanceInfo } = data.data;
-          setProgress(progress);
-          setMessage(getStatusMessage(status));
-
-          if (instanceInfo?.ip) {
-            setInstanceIp(instanceInfo.ip);
-            stopPolling();
-          }
-        }
       } catch (error) {
-        console.error('Error al verificar estado:', error);
-        stopPolling();
+        console.error('Error en el monitoreo:', error);
+      } finally {
+        isMonitoring = false;
       }
     };
 
-    // Solo iniciar el polling si estamos creando y no tenemos IP
-    if (isCreating && !instanceIp) {
-      isPolling = true;
-      checkStatus();
-      pollInterval = setInterval(checkStatus, 5000);
-    }
+    startMonitoring();
 
     return () => {
-      stopPolling();
+      isMonitoring = false;
     };
-  }, [isCreating, instanceIp, countryCode, phoneNumber]);
+  }, [isCreating, instanceIp, countryCode, phoneNumber, userEmail]);
 
   useEffect(() => {
     if (isCreating && !instanceIp && timeLeft > 0) {

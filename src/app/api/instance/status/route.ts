@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-const API_URL = 'http://localhost:3000/api';
+const API_URL = `http://${process.env.ORQUESTA_URL}/api`;
 const API_KEY = process.env.SECRET_KEY;
 
 function sanitizeHostname(phone: string): string {
