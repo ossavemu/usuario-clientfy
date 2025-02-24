@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
-const API_URL = `http://${process.env.ORQUESTA_URL}/api`;
+const API_URL = process.env.ORQUESTA_URL;
 const API_KEY = process.env.SECRET_KEY;
 
 function sanitizeHostname(phone: string): string {
@@ -43,14 +43,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    if (!API_URL) {
+      throw new Error('ORQUESTA_URL no está configurada');
+    }
+
     const sanitizedPhone = sanitizeHostname(phoneParam);
 
     console.log('\n📡 Monitoreando estado de la instancia...');
     console.log('📱 Número:', phoneParam);
     console.log('🤖 Hostname:', sanitizedPhone);
+    console.log('🌐 URL:', `${API_URL}/api/instance/status/${sanitizedPhone}`);
 
     const response = await fetch(
-      `${API_URL}/instance/status/${sanitizedPhone}`,
+      `${API_URL}/api/instance/status/${sanitizedPhone}`,
       {
         headers: {
           'x-api-key': API_KEY || '',
@@ -58,9 +63,21 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     );
 
+    console.log('📡 Estado de la respuesta:', response.status);
     const data = await response.json();
+    console.log('📦 Datos recibidos:', data);
 
     if (!response.ok || !data.success) {
+      if (response.status === 404) {
+        return NextResponse.json({
+          success: true,
+          data: {
+            status: 'creating',
+            progress: 0,
+          },
+        });
+      }
+
       const errorMessage =
         data.error || `Error del servidor: ${response.status}`;
       console.error('\n❌ Error:', errorMessage);
@@ -97,9 +114,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
     });
   } catch (error) {
+    console.error('❌ Error crítico:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Error desconocido';
-    console.error('\n❌ Error al verificar estado:', errorMessage);
     return NextResponse.json({
       success: false,
       error: errorMessage,
