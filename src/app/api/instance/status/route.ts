@@ -4,8 +4,8 @@ import { NextResponse } from 'next/server';
 const API_URL = process.env.ORQUESTA_URL;
 const API_KEY = process.env.SECRET_KEY;
 
-function sanitizeHostname(phone: string): string {
-  return `bot-${phone.toLowerCase().replace(/[^a-zA-Z0-9.-]/g, '')}`;
+function sanitizePhone(phone: string): string {
+  return phone.toLowerCase().replace(/[^0-9]/g, '');
 }
 
 const getProgressByStatus = (status: string): number => {
@@ -47,15 +47,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       throw new Error('ORQUESTA_URL no está configurada');
     }
 
-    const sanitizedPhone = sanitizeHostname(phoneParam);
+    const cleanPhone = sanitizePhone(phoneParam);
 
     console.log('\n📡 Monitoreando estado de la instancia...');
     console.log('📱 Número:', phoneParam);
-    console.log('🤖 Hostname:', sanitizedPhone);
-    console.log('🌐 URL:', `${API_URL}/api/instance/status/${sanitizedPhone}`);
+    console.log('🤖 Hostname:', `bot-${cleanPhone}`);
+    console.log('🌐 URL:', `${API_URL}/api/instance/status/${cleanPhone}`);
 
     const response = await fetch(
-      `${API_URL}/api/instance/status/${sanitizedPhone}`,
+      `${API_URL}/api/instance/status/${cleanPhone}`,
       {
         headers: {
           'x-api-key': API_KEY || '',
