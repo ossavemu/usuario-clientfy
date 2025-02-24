@@ -1,6 +1,11 @@
 import { redis } from '@/lib/redis';
 import { NextResponse } from 'next/server';
 
+interface Droplet {
+  id: number;
+  name: string;
+}
+
 async function deleteDroplet(dropletName: string): Promise<boolean> {
   try {
     const DO_TOKEN = process.env.DO_TOKEN;
@@ -26,7 +31,7 @@ async function deleteDroplet(dropletName: string): Promise<boolean> {
 
     const dropletsData = await dropletsResponse.json();
     const droplet = dropletsData.droplets.find(
-      (d: any) => d.name === dropletName
+      (d: Droplet) => d.name === dropletName
     );
 
     if (!droplet) {

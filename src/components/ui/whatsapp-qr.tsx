@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { QrCode, RotateCw } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface WhatsAppQRProps {
@@ -19,22 +19,31 @@ export function WhatsAppQR({
   const qrUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const qrCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  const updateQR = () => {
+  const clearIntervals = useCallback(() => {
+    if (qrUpdateIntervalRef.current) {
+      clearInterval(qrUpdateIntervalRef.current);
+    }
+    if (qrCheckIntervalRef.current) {
+      clearInterval(qrCheckIntervalRef.current);
+    }
+  }, []);
+
+  const updateQR = useCallback(() => {
     if (!instanceIp) return;
 
     const qrImage = document.getElementById('whatsapp-qr') as HTMLImageElement;
     if (qrImage) {
       qrImage.src = `/api/qr?ip=${instanceIp}&t=${Date.now()}`;
     }
-  };
+  }, [instanceIp]);
 
-  const checkQRStatus = async () => {
+  const checkQRStatus = useCallback(async () => {
     if (!instanceIp || isLinked) return;
 
     try {
       const response = await fetch(`http://${instanceIp}:3008`);
       if (response.status === 404) {
-        setIsLinked(true);
+        onQrUpdate();
         toast.success('WhatsApp vinculado correctamente');
         clearIntervals();
       }
@@ -42,16 +51,7 @@ export function WhatsAppQR({
       console.error('Error al verificar QR:', error);
       setQrError(true);
     }
-  };
-
-  const clearIntervals = () => {
-    if (qrUpdateIntervalRef.current) {
-      clearInterval(qrUpdateIntervalRef.current);
-    }
-    if (qrCheckIntervalRef.current) {
-      clearInterval(qrCheckIntervalRef.current);
-    }
-  };
+  }, [instanceIp, isLinked, clearIntervals, onQrUpdate]);
 
   useEffect(() => {
     if (instanceIp && !isLinked) {
@@ -64,7 +64,7 @@ export function WhatsAppQR({
 
       return () => clearIntervals();
     }
-  }, [instanceIp, isLinked]);
+  }, [instanceIp, isLinked, updateQR, checkQRStatus, clearIntervals]);
 
   if (!instanceIp) return null;
 
@@ -86,7 +86,6 @@ export function WhatsAppQR({
             variant="outline"
             size="sm"
             onClick={() => {
-              setIsLinked(false);
               onQrUpdate();
               updateQR();
             }}

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { jwtDecode } from 'jwt-decode';
 import { Home, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import type { Dispatch, SetStateAction } from 'react';
 import {
   createContext,
   useCallback,
@@ -17,9 +18,12 @@ interface AuthProviderProps {
 }
 
 // Crear el contexto para el estado de creación del bot
-export const BotCreationContext = createContext({
+export const BotCreationContext = createContext<{
+  isCreatingBot: boolean;
+  setIsCreatingBot: Dispatch<SetStateAction<boolean>>;
+}>({
   isCreatingBot: false,
-  setIsCreatingBot: (value: boolean) => {},
+  setIsCreatingBot: () => {},
 });
 
 export const useBotCreation = () => useContext(BotCreationContext);
