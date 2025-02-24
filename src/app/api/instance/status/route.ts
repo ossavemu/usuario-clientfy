@@ -25,18 +25,28 @@ const getProgressByStatus = (status: string): number => {
   }
 };
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { phone: string | string[] } }
-): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // En rutas dinámicas, Next.js puede enviar el parámetro como string o arreglo
-    const phoneParam = params.phone;
-    const phone = typeof phoneParam === 'string' ? phoneParam : phoneParam[0];
-    const sanitizedPhone = sanitizeHostname(phone);
+    const phoneParam = request.nextUrl.searchParams.get('phone');
+
+    if (!phoneParam) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Número de teléfono requerido',
+          data: {
+            status: 'error',
+            progress: 0,
+          },
+        },
+        { status: 400 }
+      );
+    }
+
+    const sanitizedPhone = sanitizeHostname(phoneParam);
 
     console.log('\n📡 Monitoreando estado de la instancia...');
-    console.log('📱 Número:', phone);
+    console.log('📱 Número:', phoneParam);
     console.log('🤖 Hostname:', sanitizedPhone);
 
     const response = await fetch(
