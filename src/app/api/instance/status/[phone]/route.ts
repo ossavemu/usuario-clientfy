@@ -27,11 +27,12 @@ const getProgressByStatus = (status: string): number => {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Record<string, string> }
+  { params }: { params: { phone: string | string[] } }
 ): Promise<NextResponse> {
   try {
-    // Si phone podría venir como arreglo, tomar el primer elemento:
-    const phone = Array.isArray(params.phone) ? params.phone[0] : params.phone;
+    // En rutas dinámicas, Next.js puede enviar el parámetro como string o arreglo
+    const phoneParam = params.phone;
+    const phone = typeof phoneParam === 'string' ? phoneParam : phoneParam[0];
     const sanitizedPhone = sanitizeHostname(phone);
 
     console.log('\n📡 Monitoreando estado de la instancia...');
