@@ -26,18 +26,12 @@ const getProgressByStatus = (status: string): number => {
   }
 };
 
-type Props = {
-  params: {
-    phone: string;
-  };
-};
-
 export async function GET(
-  _request: Request,
-  props: Props
-): Promise<NextResponse> {
+  request: Request,
+  { params }: { params: { phone: string } }
+): Promise<Response> {
   try {
-    const phone = props.params.phone;
+    const phone = params.phone;
     const sanitizedPhone = sanitizeHostname(phone);
 
     console.log('\n📡 Monitoreando estado de la instancia...');
