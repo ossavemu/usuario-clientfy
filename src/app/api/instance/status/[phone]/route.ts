@@ -1,4 +1,3 @@
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 const API_URL = 'http://localhost:3000/api';
@@ -27,12 +26,18 @@ const getProgressByStatus = (status: string): number => {
   }
 };
 
+type Props = {
+  params: {
+    phone: string;
+  };
+};
+
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { phone: string } }
+  _request: Request,
+  props: Props
 ): Promise<NextResponse> {
   try {
-    const phone = params.phone;
+    const phone = props.params.phone;
     const sanitizedPhone = sanitizeHostname(phone);
 
     console.log('\n📡 Monitoreando estado de la instancia...');
