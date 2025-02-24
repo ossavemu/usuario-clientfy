@@ -1,4 +1,3 @@
-import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 const API_URL = 'http://localhost:3000/api';
@@ -28,7 +27,7 @@ const getProgressByStatus = (status: string): number => {
 };
 
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { phone: string } }
 ) {
   try {
