@@ -4,16 +4,31 @@ import { Button } from '@/components/ui/button';
 import { jwtDecode } from 'jwt-decode';
 import { Home, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from 'react';
 
 interface AuthProviderProps {
   children?: React.ReactNode;
 }
 
+// Crear el contexto para el estado de creación del bot
+export const BotCreationContext = createContext({
+  isCreatingBot: false,
+  setIsCreatingBot: (value: boolean) => {},
+});
+
+export const useBotCreation = () => useContext(BotCreationContext);
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreatingBot, setIsCreatingBot] = useState(false);
 
   const validateSession = useCallback(async (token: string) => {
     try {
@@ -126,13 +141,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   return (
-    <>
+    <BotCreationContext.Provider value={{ isCreatingBot, setIsCreatingBot }}>
       {isAuthenticated && (
         <div className="absolute top-0 right-0 p-4 z-50 flex gap-2">
           <Button
             variant="ghost"
             onClick={handleGoHome}
-            className="text-white hover:text-white/80 hover:bg-purple-700/20"
+            disabled={isCreatingBot}
+            className={`text-white hover:text-white/80 hover:bg-purple-700/20 ${
+              isCreatingBot ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
             size="sm"
           >
             <Home className="h-4 w-4 mr-2" />
@@ -141,7 +159,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
           <Button
             variant="ghost"
             onClick={handleLogout}
-            className="text-white hover:text-white/80 hover:bg-purple-700/20"
+            disabled={isCreatingBot}
+            className={`text-white hover:text-white/80 hover:bg-purple-700/20 ${
+              isCreatingBot ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
             size="sm"
           >
             <LogOut className="h-4 w-4 mr-2" />
@@ -150,6 +171,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         </div>
       )}
       {children}
-    </>
+    </BotCreationContext.Provider>
   );
 }

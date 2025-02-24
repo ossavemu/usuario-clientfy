@@ -2,6 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.progress-circle {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform: rotate(-90deg);
+}
+
+.progress-circle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #7c3aed var(--progress),
+    rgba(124, 58, 237, 0.12) 0
+  );
+  mask: radial-gradient(farthest-side, transparent 75%, #000 76%);
+  -webkit-mask: radial-gradient(farthest-side, transparent 75%, #000 76%);
+}
+
+.progress-circle::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #7c3aed var(--progress), transparent 0);
+  filter: drop-shadow(0 0 6px rgba(124, 58, 237, 0.4));
+  animation: pulse 2s infinite;
+  mask: radial-gradient(farthest-side, transparent 75%, #000 76%);
+  -webkit-mask: radial-gradient(farthest-side, transparent 75%, #000 76%);
+}
+
 /* Estilos base para la scrollbar */
 * {
   scrollbar-width: thin; /* Firefox */

@@ -1,65 +1,103 @@
 import { NextResponse } from 'next/server';
 
-const API_URL = 'http://137.184.34.79:3000/api';
+const API_URL = 'http://localhost:3000/api';
 const API_KEY = process.env.SECRET_KEY;
 
-interface InstanceStatus {
-  status: string;
-  progress: number;
-  error?: string;
-  instanceInfo?: {
-    ip: string | null;
-    instanceName: string;
-    state: string;
-  };
+function sanitizeHostname(phone: string): string {
+  // Eliminar caracteres no permitidos y convertir a minúsculas
+  // Solo permitir: a-z, A-Z, 0-9, . y -
+  return `bot-${phone.toLowerCase().replace(/[^a-zA-Z0-9.-]/g, '')}`;
 }
 
-interface ApiResponse {
-  success: boolean;
-  error?: string;
-  data: InstanceStatus;
-}
+const getProgressByStatus = (status: string): number => {
+  switch (status) {
+    case 'creating':
+      return 0;
+    case 'creating_droplet':
+      return 25;
+    case 'waiting_for_ssh':
+      return 50;
+    case 'configuring':
+      return 75;
+    case 'completed':
+      return 100;
+    default:
+      return 0;
+  }
+};
 
 export async function GET(
   request: Request,
-  context: { params: Promise<{ phone: string }> }
+  context: { params: { phone: string } }
 ) {
   try {
-    const { phone } = await context.params;
+    const params = await context.params;
+    const phone = params.phone;
+    const sanitizedPhone = sanitizeHostname(phone);
 
-    const response = await fetch(`${API_URL}/instance/status/${phone}`, {
-      headers: {
-        'x-api-key': API_KEY || '2rgIgH4GXmVzRsr8juvS3dDTxr3',
-      },
-    });
+    console.log('\n📡 Monitoreando estado de la instancia...');
+    console.log('📱 Número:', phone);
+    console.log('🤖 Hostname:', sanitizedPhone);
 
-    const apiResponse = (await response.json()) as ApiResponse;
+    const response = await fetch(
+      `${API_URL}/instance/status/${sanitizedPhone}`,
+      {
+        headers: {
+          'x-api-key': API_KEY || '',
+        },
+      }
+    );
 
-    if (!apiResponse.success) {
+    const data = await response.json();
+
+    if (!response.ok || !data.success) {
+      const errorMessage =
+        data.error || `Error del servidor: ${response.status}`;
+      console.error('\n❌ Error:', errorMessage);
       return NextResponse.json({
+        success: false,
+        error: errorMessage,
         data: {
           status: 'error',
           progress: 0,
-          error: apiResponse.error || 'Error desconocido',
         },
       });
     }
 
+    const { status } = data.data;
+    const progress = getProgressByStatus(status);
+
+    // Solo mostrar cambios de estado o progreso
+    console.log(`\n⏱️ Estado: ${status} (${progress}%)`);
+
+    if (data.data.instanceInfo?.ip) {
+      console.log(`🌐 IP: ${data.data.instanceInfo.ip}`);
+    }
+
+    // Estados finales
+    if (status === 'completed') {
+      console.log('\n✅ ¡Instancia creada exitosamente!');
+    } else if (status === 'failed') {
+      console.error('\n❌ Error en la creación:', data.data.error);
+    }
+
     return NextResponse.json({
+      success: true,
       data: {
-        status: apiResponse.data.status,
-        progress: apiResponse.data.progress,
-        error: apiResponse.data.error,
-        instanceInfo: apiResponse.data.instanceInfo,
+        ...data.data,
+        progress,
       },
     });
   } catch (error) {
-    console.error('Error getting instance status:', error);
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error desconocido';
+    console.error('\n❌ Error al verificar estado:', errorMessage);
     return NextResponse.json({
+      success: false,
+      error: errorMessage,
       data: {
         status: 'error',
         progress: 0,
-        error: 'Error al obtener el estado de la instancia',
       },
     });
   }

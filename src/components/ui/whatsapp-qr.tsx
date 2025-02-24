@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { QrCode, RotateCw } from 'lucide-react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 interface WhatsAppQRProps {
@@ -14,26 +14,57 @@ export function WhatsAppQR({
   isLinked,
   onQrUpdate,
 }: WhatsAppQRProps) {
+  const [qrError, setQrError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const qrUpdateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const qrCheckIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const updateQR = () => {
+    if (!instanceIp) return;
+
+    const qrImage = document.getElementById('whatsapp-qr') as HTMLImageElement;
+    if (qrImage) {
+      qrImage.src = `/api/qr?ip=${instanceIp}&t=${Date.now()}`;
+    }
+  };
+
+  const checkQRStatus = async () => {
+    if (!instanceIp || isLinked) return;
+
+    try {
+      const response = await fetch(`http://${instanceIp}:3008`);
+      if (response.status === 404) {
+        setIsLinked(true);
+        toast.success('WhatsApp vinculado correctamente');
+        clearIntervals();
+      }
+    } catch (error) {
+      console.error('Error al verificar QR:', error);
+      setQrError(true);
+    }
+  };
+
+  const clearIntervals = () => {
+    if (qrUpdateIntervalRef.current) {
+      clearInterval(qrUpdateIntervalRef.current);
+    }
+    if (qrCheckIntervalRef.current) {
+      clearInterval(qrCheckIntervalRef.current);
+    }
+  };
 
   useEffect(() => {
-    if (instanceIp) {
-      qrUpdateIntervalRef.current = setInterval(() => {
-        const qrImage = document.getElementById(
-          'whatsapp-qr'
-        ) as HTMLImageElement;
-        if (qrImage) {
-          qrImage.src = `http://${instanceIp}:3008/qr?t=${Date.now()}`;
-        }
-      }, 30000);
+    if (instanceIp && !isLinked) {
+      // Actualizar QR cada 30 segundos
+      updateQR();
+      qrUpdateIntervalRef.current = setInterval(updateQR, 30000);
 
-      return () => {
-        if (qrUpdateIntervalRef.current !== null) {
-          clearInterval(qrUpdateIntervalRef.current);
-        }
-      };
+      // Verificar estado cada 10 segundos
+      qrCheckIntervalRef.current = setInterval(checkQRStatus, 10000);
+
+      return () => clearIntervals();
     }
-  }, [instanceIp]);
+  }, [instanceIp, isLinked]);
 
   if (!instanceIp) return null;
 
@@ -54,11 +85,15 @@ export function WhatsAppQR({
           <Button
             variant="outline"
             size="sm"
-            onClick={onQrUpdate}
+            onClick={() => {
+              setIsLinked(false);
+              onQrUpdate();
+              updateQR();
+            }}
             className="text-purple-600 border-purple-600 hover:bg-purple-50"
           >
             <RotateCw className="w-4 h-4 mr-2" />
-            Consultar QR
+            Actualizar QR
           </Button>
         </div>
       </div>
@@ -66,16 +101,42 @@ export function WhatsAppQR({
   }
 
   return (
-    <div className="w-full h-fit flex items-center justify-center">
-      <img
-        id="whatsapp-qr"
-        src={`http://${instanceIp}:3008/qr`}
-        alt="WhatsApp QR"
-        className="max-w-full max-h-full"
-        onError={() => {
-          toast.info('Vinculación detectada');
-        }}
-      />
+    <div className="w-full h-fit flex flex-col items-center justify-center">
+      {qrError ? (
+        <div className="text-center space-y-4">
+          <QrCode className="w-48 h-48 text-red-400 mx-auto" />
+          <p className="text-red-500">Error al cargar el código QR</p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setQrError(false);
+              updateQR();
+            }}
+            className="text-purple-600 border-purple-600 hover:bg-purple-50"
+          >
+            <RotateCw className="w-4 h-4 mr-2" />
+            Reintentar
+          </Button>
+        </div>
+      ) : (
+        <img
+          id="whatsapp-qr"
+          src={`/api/qr?ip=${instanceIp}&t=${Date.now()}`}
+          alt="WhatsApp QR"
+          className="max-w-full max-h-full"
+          onLoad={() => setIsLoading(false)}
+          onError={() => {
+            setQrError(true);
+            setIsLoading(false);
+          }}
+        />
+      )}
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-white/80">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
+        </div>
+      )}
     </div>
   );
 }
