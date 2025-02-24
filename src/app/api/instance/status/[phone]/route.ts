@@ -1,3 +1,4 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 const API_URL = 'http://localhost:3000/api';
@@ -27,11 +28,10 @@ const getProgressByStatus = (status: string): number => {
 };
 
 export async function GET(
-  request: Request,
-  context: { params: { phone: string } }
+  request: NextRequest,
+  { params }: { params: { phone: string } }
 ) {
   try {
-    const params = await context.params;
     const phone = params.phone;
     const sanitizedPhone = sanitizeHostname(phone);
 
