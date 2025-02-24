@@ -1,11 +1,10 @@
+import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 const API_URL = 'http://localhost:3000/api';
 const API_KEY = process.env.SECRET_KEY;
 
 function sanitizeHostname(phone: string): string {
-  // Eliminar caracteres no permitidos y convertir a minúsculas
-  // Solo permitir: a-z, A-Z, 0-9, . y -
   return `bot-${phone.toLowerCase().replace(/[^a-zA-Z0-9.-]/g, '')}`;
 }
 
@@ -27,11 +26,12 @@ const getProgressByStatus = (status: string): number => {
 };
 
 export async function GET(
-  request: Request,
-  { params }: { params: { phone: string } }
-): Promise<Response> {
+  request: NextRequest,
+  { params }: { params: Record<string, string> }
+): Promise<NextResponse> {
   try {
-    const phone = params.phone;
+    // Si phone podría venir como arreglo, tomar el primer elemento:
+    const phone = Array.isArray(params.phone) ? params.phone[0] : params.phone;
     const sanitizedPhone = sanitizeHostname(phone);
 
     console.log('\n📡 Monitoreando estado de la instancia...');
@@ -66,14 +66,12 @@ export async function GET(
     const { status } = data.data;
     const progress = getProgressByStatus(status);
 
-    // Solo mostrar cambios de estado o progreso
     console.log(`\n⏱️ Estado: ${status} (${progress}%)`);
 
     if (data.data.instanceInfo?.ip) {
       console.log(`🌐 IP: ${data.data.instanceInfo.ip}`);
     }
 
-    // Estados finales
     if (status === 'completed') {
       console.log('\n✅ ¡Instancia creada exitosamente!');
     } else if (status === 'failed') {
