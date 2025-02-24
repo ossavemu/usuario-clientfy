@@ -185,7 +185,9 @@ export function CreateBotFlow({
 
       try {
         const cleanPhone = `${countryCode}${phoneNumber}`.replace(/\+/g, '');
-        const response = await fetch(`/api/instance/status/${cleanPhone}`);
+        const response = await fetch(
+          `/api/instance/status?phone=${encodeURIComponent(cleanPhone)}`
+        );
         const data = await response.json();
 
         // Si ya no estamos creando o ya tenemos IP, detener
