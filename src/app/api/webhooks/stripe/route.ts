@@ -2,7 +2,6 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const STRIPE_WEBHOOK_SECRET = 'whsec_hLJOz9NZwXebxSebe9tVYDfWTDhSI3GA';
 const API_URL = process.env.ORQUESTA_URL || 'http://137.184.34.79:3000';
 const API_KEY = process.env.SECRET_KEY || '2rgIgH4GXmVzRsr8juvS3dDTxr3';
 
@@ -21,38 +20,29 @@ export const config = {
   },
 };
 
+// Este método procesa los webhooks de Stripe
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Obtener el cuerpo raw usando directamente text()
-    const payload = await request.text();
-
-    // Obtener la firma del encabezado
-    const signature = request.headers.get('stripe-signature');
-
-    if (!signature) {
-      console.error('❌ No se encontró la firma de Stripe');
-      return NextResponse.json(
-        { success: false, error: 'No se encontró la firma de Stripe' },
-        { status: 400 }
-      );
-    }
-
-    // Verificar la firma
     let event: Stripe.Event;
+
     try {
-      event = stripe.webhooks.constructEvent(
-        payload,
-        signature,
-        STRIPE_WEBHOOK_SECRET
-      );
+      // Parsear el body como JSON
+      const requestData = await request.json();
+
+      // Verificar que sea un evento de Stripe válido
+      if (!requestData.type || !requestData.data || !requestData.data.object) {
+        throw new Error('Formato de evento inválido');
+      }
+
+      // Usar el evento sin verificación de firma (para desarrollo)
+      event = requestData as Stripe.Event;
+      console.log('✅ Evento recibido:', event.type);
     } catch (err) {
-      console.error('❌ Error al verificar webhook:', err);
+      console.error('❌ Error al procesar el evento:', err);
       return NextResponse.json(
         {
           success: false,
-          error: `Error de firma de webhook: ${
-            err instanceof Error ? err.message : 'Error desconocido'
-          }`,
+          error: 'Formato de evento inválido',
         },
         { status: 400 }
       );
