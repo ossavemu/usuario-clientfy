@@ -2,16 +2,12 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const API_URL = process.env.ORQUESTA_URL || 'http://137.184.34.79:3000';
-const API_KEY = process.env.SECRET_KEY || '2rgIgH4GXmVzRsr8juvS3dDTxr3';
-
+const API_URL = process.env.ORQUESTA_URL;
+const API_KEY = process.env.SECRET_KEY;
 // Configurar Stripe
-const stripe = new Stripe(
-  'sk_test_51Q2KkUACo1meUjc7YzTRkotlHDBh5hJAXXLlFsYUejiEEJ3QRyEsVA90KOgGaZxWxN8qHivc5sbdqVxAU30YEwR50095EOj4wj',
-  {
-    apiVersion: '2025-02-24.acacia',
-  }
-);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+  apiVersion: '2025-02-24.acacia',
+});
 
 // Desactivar el body parser
 export const config = {
@@ -76,7 +72,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-api-key': API_KEY,
+          'x-api-key': API_KEY as string,
         },
         body: JSON.stringify({ email }),
       });
