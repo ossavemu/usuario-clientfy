@@ -14,39 +14,17 @@ const stripe = new Stripe(
   }
 );
 
-// Desactivar el body parser automático para recibir el raw body
+// Desactivar el body parser
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-// Función para recibir el body raw
-async function getRawBody(request: Request): Promise<string> {
-  const reader = request.body?.getReader();
-  if (!reader) {
-    return '';
-  }
-
-  const chunks: Uint8Array[] = [];
-  let done = false;
-
-  while (!done) {
-    const { value, done: doneReading } = await reader.read();
-    done = doneReading;
-    if (value) {
-      chunks.push(value);
-    }
-  }
-
-  const bodyBuffer = Buffer.concat(chunks.map((chunk) => Buffer.from(chunk)));
-  return bodyBuffer.toString('utf8');
-}
-
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Obtener el cuerpo raw
-    const payload = await getRawBody(request);
+    // Obtener el cuerpo raw usando directamente text()
+    const payload = await request.text();
 
     // Obtener la firma del encabezado
     const signature = request.headers.get('stripe-signature');
