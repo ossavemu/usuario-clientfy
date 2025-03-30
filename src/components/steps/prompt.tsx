@@ -8,7 +8,6 @@ import {
 } from '@/components/ui/dialog';
 import { StepNavigation } from '@/components/ui/step-navigation';
 import { Textarea } from '@/components/ui/textarea';
-import { try$ } from '@/lib/try';
 import { type RegistrationData } from '@/types/registration';
 import { RotateCcw, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -62,18 +61,19 @@ export function PromptStep({
 
       const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
 
-      const [error, result] = await try$(
-        fetch(`/api/prompt?phoneNumber=${phoneNumber}`).then((res) =>
-          res.json()
-        )
-      );
+      try {
+        const response = await fetch(`/api/prompt?phoneNumber=${phoneNumber}`);
+        const result = await response.json();
 
-      if (!error && result?.success && result.prompt) {
-        onUpdate({ prompt: result.prompt });
-        setExistingPrompt(true);
+        if (result?.success && result.prompt) {
+          onUpdate({ prompt: result.prompt });
+          setExistingPrompt(true);
+        }
+      } catch (error) {
+        console.error('Error al cargar el prompt existente:', error);
+      } finally {
+        setHasAttemptedLoad(true);
       }
-
-      setHasAttemptedLoad(true);
     };
 
     loadExistingPrompt();
@@ -88,27 +88,30 @@ export function PromptStep({
     setIsLoading(true);
     const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
 
-    const [error, result] = await try$(
-      fetch('/api/prompt', {
+    try {
+      const response = await fetch('/api/prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber,
           prompt: data.prompt,
         }),
-      }).then((res) => res.json())
-    );
+      });
+      const result = await response.json();
 
-    setIsLoading(false);
+      if (!result?.success) {
+        throw new Error(result?.error || 'Error al guardar el prompt');
+      }
 
-    if (error || !result?.success) {
+      toast.success('Prompt guardado exitosamente');
+      setExistingPrompt(true);
+      onNext();
+    } catch (error) {
+      console.error('Error al guardar el prompt:', error);
       toast.error('Error al guardar el prompt');
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    toast.success('Prompt guardado exitosamente');
-    setExistingPrompt(true);
-    onNext();
   };
 
   const handleImprove = async () => {
@@ -121,37 +124,40 @@ export function PromptStep({
     setOriginalPrompt(data.prompt);
     setShowRevert(true);
 
-    const [error, result] = await try$(
-      fetch('/api/prompt/improve', {
+    try {
+      const response = await fetch('/api/prompt/improve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: data.prompt }),
-      }).then((res) => res.json())
-    );
+      });
+      const result = await response.json();
 
-    setIsLoading(false);
+      if (!result?.success) {
+        throw new Error(result?.error || 'Error al mejorar el prompt');
+      }
 
-    if (error || !result?.success) {
+      let improvedPrompt = result.improvedPrompt;
+
+      if (improvedPrompt.startsWith('Eres un')) {
+        if (data.companyName && !improvedPrompt.includes(data.companyName)) {
+          improvedPrompt = improvedPrompt.replace(
+            /empresa\s+([^\s.,]+)/i,
+            `empresa ${data.companyName}`
+          );
+        }
+      } else {
+        improvedPrompt = requiredPrefix + ' ' + improvedPrompt;
+      }
+
+      onUpdate({ prompt: improvedPrompt });
+      toast.success('Prompt mejorado exitosamente');
+    } catch (error) {
+      console.error('Error al mejorar el prompt:', error);
       toast.error('Error al mejorar el prompt');
       setShowRevert(false);
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    let improvedPrompt = result.improvedPrompt;
-
-    if (improvedPrompt.startsWith('Eres un')) {
-      if (data.companyName && !improvedPrompt.includes(data.companyName)) {
-        improvedPrompt = improvedPrompt.replace(
-          /empresa\s+([^\s.,]+)/i,
-          `empresa ${data.companyName}`
-        );
-      }
-    } else {
-      improvedPrompt = requiredPrefix + ' ' + improvedPrompt;
-    }
-
-    onUpdate({ prompt: improvedPrompt });
-    toast.success('Prompt mejorado exitosamente');
   };
 
   const handleRevert = () => {

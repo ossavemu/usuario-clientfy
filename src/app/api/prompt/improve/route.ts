@@ -1,4 +1,3 @@
-import { try$ } from '@/lib/try';
 import {
   GoogleGenerativeAI,
   HarmBlockThreshold,
@@ -61,43 +60,61 @@ Prompt original a mejorar:
 ${prompt}
 
 Genera SOLO el prompt mejorado, sin explicaciones adicionales.`;
-
-  const [error, result] = await try$(
-    model.generateContent({
+  try {
+    const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: promptContent }] }],
-    })
-  );
+    });
 
-  if (error) throw error;
-  return result!.response.text().trim();
+    return result!.response.text().trim();
+  } catch (error) {
+    throw error;
+  }
 }
 
 export async function POST(request: Request) {
-  const [reqError, reqData] = await try$(request.json());
+  let reqData;
 
-  if (reqError || !reqData?.prompt) {
+  try {
+    reqData = await request.json();
+
+    if (!reqData?.prompt) {
+      return NextResponse.json(
+        { error: 'Se requiere el prompt' },
+        { status: 400 }
+      );
+    }
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        {
+          error: 'Error al obtener los datos de la solicitud',
+          details: error.message,
+        },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
-      { error: reqError?.message || 'Se requiere el prompt' },
+      { error: 'Error al obtener los datos de la solicitud' },
       { status: 400 }
     );
   }
 
-  const [improveError, improvedPrompt] = await try$(
-    improvePromptWithAI(reqData.prompt)
-  );
-
-  if (improveError) {
+  try {
+    const improvedPrompt = await improvePromptWithAI(reqData.prompt);
+    return NextResponse.json({
+      success: true,
+      improvedPrompt,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: 'Error al mejorar el prompt', details: error.message },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      {
-        error: 'Error al mejorar el prompt',
-        details: improveError.message,
-      },
+      { error: 'Error desconocido al mejorar el prompt' },
       { status: 500 }
     );
   }
-
-  return NextResponse.json({
-    success: true,
-    improvedPrompt,
-  });
 }

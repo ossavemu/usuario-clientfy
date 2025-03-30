@@ -3,7 +3,6 @@ import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StepNavigation } from '@/components/ui/step-navigation';
-import { try$ } from '@/lib/try';
 import { type RegistrationData } from '@/types/registration';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -112,20 +111,19 @@ export function ImageUploadStep({
 
     setIsLoading(true);
 
-    const [error, result] = await try$(
-      fetch(`/api/images?phoneNumber=${phoneNumber}`).then((res) => res.json())
-    );
+    try {
+      const response = await fetch(`/api/images?phoneNumber=${phoneNumber}`);
+      const result = await response.json();
 
-    setIsLoading(false);
-
-    if (error) {
+      if (result?.success && result.images) {
+        setUploadedImages(result.images);
+        onUpdate({ images: result.images });
+      }
+    } catch (error) {
+      console.error('Error al cargar imágenes existentes:', error);
       setError('Error al cargar imágenes existentes');
-      return;
-    }
-
-    if (result?.success && result.images) {
-      setUploadedImages(result.images);
-      onUpdate({ images: result.images });
+    } finally {
+      setIsLoading(false);
     }
   }, [getPhoneNumber, onUpdate]);
 
@@ -145,17 +143,15 @@ export function ImageUploadStep({
     setIsLoading(true);
     setError('');
 
-    const [processError, optimizedFiles] = await try$(
-      processImageFiles(e.target.files)
-    );
-
-    if (processError) {
-      setError('Error al procesar las imágenes');
-    } else if (optimizedFiles) {
+    try {
+      const optimizedFiles = await processImageFiles(e.target.files);
       setImages((prev) => [...prev, ...optimizedFiles]);
+    } catch (error) {
+      console.error('Error al procesar las imágenes:', error);
+      setError('Error al procesar las imágenes');
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const handleNameChange = (index: number, newName: string) => {
@@ -190,26 +186,29 @@ export function ImageUploadStep({
 
     setIsLoading(true);
 
-    const fileName = `${imageName}.jpg`;
-    const [error, result] = await try$(
-      fetch(
+    try {
+      const fileName = `${imageName}.jpg`;
+      const response = await fetch(
         `/api/files/delete?phoneNumber=${phoneNumber}&fileName=${fileName}&type=image`,
         { method: 'DELETE' }
-      ).then((res) => res.json())
-    );
+      );
+      const result = await response.json();
 
-    setIsLoading(false);
-    setDeleteModal({ isOpen: false, imageName: '' });
+      if (!result?.success) {
+        throw new Error(result?.error || 'Error al eliminar la imagen');
+      }
 
-    if (error || !result?.success) {
+      const newImages = uploadedImages.filter((img) => img.name !== imageName);
+      setUploadedImages(newImages);
+      onUpdate({ images: newImages });
+      toast.success('Imagen eliminada exitosamente');
+    } catch (error) {
+      console.error('Error al eliminar la imagen:', error);
       toast.error('Error al eliminar la imagen');
-      return;
+    } finally {
+      setIsLoading(false);
+      setDeleteModal({ isOpen: false, imageName: '' });
     }
-
-    const newImages = uploadedImages.filter((img) => img.name !== imageName);
-    setUploadedImages(newImages);
-    onUpdate({ images: newImages });
-    toast.success('Imagen eliminada exitosamente');
   };
 
   const handleUpload = async () => {
@@ -229,38 +228,40 @@ export function ImageUploadStep({
     setIsLoading(true);
     setError('');
 
-    const formData = new FormData();
-    images.forEach((img) => {
-      formData.append('files', img.file);
-      formData.append('names', img.name.trim());
-    });
-    formData.append('phoneNumber', phoneNumber);
+    try {
+      const formData = new FormData();
+      images.forEach((img) => {
+        formData.append('files', img.file);
+        formData.append('names', img.name.trim());
+      });
+      formData.append('phoneNumber', phoneNumber);
 
-    const [error, result] = await try$(
-      fetch('/api/images', {
+      const response = await fetch('/api/images', {
         method: 'POST',
         body: formData,
-      }).then((res) => res.json())
-    );
+      });
+      const result = await response.json();
 
-    setIsLoading(false);
+      if (!result?.success) {
+        throw new Error(result?.error || 'Error al subir las imágenes');
+      }
 
-    if (error || !result?.success) {
+      const newImages = result.urls.map((url: string, index: number) => ({
+        name: images[index].name,
+        url: url,
+      }));
+
+      setUploadedImages([...uploadedImages, ...newImages]);
+      onUpdate({ images: [...uploadedImages, ...newImages] });
+      setImages([]);
+      setError('');
+    } catch (error) {
       setError(
-        error?.message || result?.error || 'Error al subir las imágenes'
+        error instanceof Error ? error.message : 'Error al subir las imágenes'
       );
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    const newImages = result.urls.map((url: string, index: number) => ({
-      name: images[index].name,
-      url: url,
-    }));
-
-    setUploadedImages([...uploadedImages, ...newImages]);
-    onUpdate({ images: [...uploadedImages, ...newImages] });
-    setImages([]);
-    setError('');
   };
 
   return (

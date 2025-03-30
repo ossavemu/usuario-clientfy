@@ -8,7 +8,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAutoTooltip } from '@/hooks/useAutoTooltip';
-import try$ from '@/lib/try';
 import { CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -24,21 +23,22 @@ export function StripeButton({
   const { isOpen, setIsOpen } = useAutoTooltip();
 
   const handlePayment = async () => {
-    const [error, response] = await try$(fetch('/api/buy'));
+    try {
+      const response = await fetch('/api/buy');
+      if (!response.ok) {
+        throw new Error('Error en la respuesta del servidor');
+      }
 
-    if (error || !response) {
-      toast.error('Error al conectar con el servicio de pago');
-      return;
+      const data = await response.json();
+      if (!data?.url) {
+        throw new Error('URL de pago no encontrada');
+      }
+
+      window.location.href = data.url;
+    } catch (error) {
+      console.error('Error al procesar el pago:', error);
+      toast.error('Error al procesar el pago');
     }
-
-    const [parseError, data] = await try$(response.json());
-
-    if (parseError || !data?.url) {
-      toast.error('Error al procesar la información de pago');
-      return;
-    }
-
-    window.location.href = data.url;
   };
 
   const button = (
