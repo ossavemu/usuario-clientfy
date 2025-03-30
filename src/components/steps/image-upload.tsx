@@ -3,6 +3,7 @@ import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { StepNavigation } from '@/components/ui/step-navigation';
+import { try$ } from '@/lib/try';
 import { type RegistrationData } from '@/types/registration';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
@@ -64,6 +65,24 @@ async function optimizeImage(file: File): Promise<Blob> {
   });
 }
 
+// Función auxiliar para procesar archivos de imagen
+async function processImageFiles(files: FileList): Promise<ImageFile[]> {
+  const processedFiles = await Promise.all(
+    Array.from(files).map(async (file) => {
+      const optimizedBlob = await optimizeImage(file);
+      const optimizedFile = new File([optimizedBlob], file.name, {
+        type: 'image/jpeg',
+      });
+      return {
+        file: optimizedFile,
+        name: file.name.replace(/\.[^/.]+$/, ''),
+        preview: URL.createObjectURL(optimizedFile),
+      };
+    })
+  );
+  return processedFiles;
+}
+
 export function ImageUploadStep({
   data,
   onUpdate,
@@ -81,29 +100,34 @@ export function ImageUploadStep({
     imageName: string;
   }>({ isOpen: false, imageName: '' });
 
-  const loadExistingImages = useCallback(async () => {
-    if (data.countryCode && data.phone) {
-      setIsLoading(true);
-      try {
-        const phoneNumber = `${data.countryCode}${data.phone}`.replace(
-          /\+/g,
-          ''
-        );
-        const response = await fetch(`/api/images?phoneNumber=${phoneNumber}`);
-        const result = await response.json();
+  const getPhoneNumber = useCallback(() => {
+    return data.countryCode && data.phone
+      ? `${data.countryCode}${data.phone}`.replace(/\+/g, '')
+      : '';
+  }, [data.countryCode, data.phone]);
 
-        if (result.success && result.images) {
-          setUploadedImages(result.images);
-          onUpdate({ images: result.images });
-        }
-      } catch (error) {
-        console.error('Error al cargar imágenes existentes:', error);
-        setError('Error al cargar imágenes existentes');
-      } finally {
-        setIsLoading(false);
-      }
+  const loadExistingImages = useCallback(async () => {
+    const phoneNumber = getPhoneNumber();
+    if (!phoneNumber) return;
+
+    setIsLoading(true);
+
+    const [error, result] = await try$(
+      fetch(`/api/images?phoneNumber=${phoneNumber}`).then((res) => res.json())
+    );
+
+    setIsLoading(false);
+
+    if (error) {
+      setError('Error al cargar imágenes existentes');
+      return;
     }
-  }, [data.countryCode, data.phone, onUpdate]);
+
+    if (result?.success && result.images) {
+      setUploadedImages(result.images);
+      onUpdate({ images: result.images });
+    }
+  }, [getPhoneNumber, onUpdate]);
 
   useEffect(() => {
     loadExistingImages();
@@ -116,30 +140,22 @@ export function ImageUploadStep({
   }, [images]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setIsLoading(true);
-      try {
-        const optimizedFiles = await Promise.all(
-          Array.from(e.target.files).map(async (file) => {
-            const optimizedBlob = await optimizeImage(file);
-            const optimizedFile = new File([optimizedBlob], file.name, {
-              type: 'image/jpeg',
-            });
-            return {
-              file: optimizedFile,
-              name: file.name.replace(/\.[^/.]+$/, ''),
-              preview: URL.createObjectURL(optimizedFile),
-            };
-          })
-        );
-        setImages((prev) => [...prev, ...optimizedFiles]);
-      } catch (error) {
-        console.error('Error al optimizar imágenes:', error);
-        setError('Error al procesar las imágenes');
-      } finally {
-        setIsLoading(false);
-      }
+    if (!e.target.files?.length) return;
+
+    setIsLoading(true);
+    setError('');
+
+    const [processError, optimizedFiles] = await try$(
+      processImageFiles(e.target.files)
+    );
+
+    if (processError) {
+      setError('Error al procesar las imágenes');
+    } else if (optimizedFiles) {
+      setImages((prev) => [...prev, ...optimizedFiles]);
     }
+
+    setIsLoading(false);
   };
 
   const handleNameChange = (index: number, newName: string) => {
@@ -162,40 +178,38 @@ export function ImageUploadStep({
     });
   };
 
-  const handleRemoveUploadedImage = async (name: string) => {
-    setDeleteModal({ isOpen: true, imageName: `${name}.jpg` });
+  const handleRemoveUploadedImage = (name: string) => {
+    setDeleteModal({ isOpen: true, imageName: name });
   };
 
   const confirmDelete = async () => {
-    const imageName = deleteModal.imageName;
-    if (!data.countryCode || !data.phone || !imageName) return;
+    const { imageName } = deleteModal;
+    const phoneNumber = getPhoneNumber();
+
+    if (!phoneNumber || !imageName) return;
 
     setIsLoading(true);
-    try {
-      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
-      const response = await fetch(
-        `/api/files/delete?phoneNumber=${phoneNumber}&fileName=${imageName}&type=image`,
+
+    const fileName = `${imageName}.jpg`;
+    const [error, result] = await try$(
+      fetch(
+        `/api/files/delete?phoneNumber=${phoneNumber}&fileName=${fileName}&type=image`,
         { method: 'DELETE' }
-      );
+      ).then((res) => res.json())
+    );
 
-      const result = await response.json();
+    setIsLoading(false);
+    setDeleteModal({ isOpen: false, imageName: '' });
 
-      if (result.success) {
-        const newImages = uploadedImages.filter(
-          (img) => img.name !== imageName
-        );
-        setUploadedImages(newImages);
-        onUpdate({ images: newImages });
-        toast.success('Imagen eliminada exitosamente');
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error('Error al eliminar imagen:', error);
+    if (error || !result?.success) {
       toast.error('Error al eliminar la imagen');
-    } finally {
-      setIsLoading(false);
+      return;
     }
+
+    const newImages = uploadedImages.filter((img) => img.name !== imageName);
+    setUploadedImages(newImages);
+    onUpdate({ images: newImages });
+    toast.success('Imagen eliminada exitosamente');
   };
 
   const handleUpload = async () => {
@@ -209,46 +223,44 @@ export function ImageUploadStep({
       return;
     }
 
+    const phoneNumber = getPhoneNumber();
+    if (!phoneNumber) return;
+
     setIsLoading(true);
     setError('');
 
-    try {
-      const formData = new FormData();
-      images.forEach((img) => {
-        formData.append('files', img.file);
-        formData.append('names', img.name.trim());
-      });
-      formData.append(
-        'phoneNumber',
-        `${data.countryCode}${data.phone}`.replace(/\+/g, '')
-      );
+    const formData = new FormData();
+    images.forEach((img) => {
+      formData.append('files', img.file);
+      formData.append('names', img.name.trim());
+    });
+    formData.append('phoneNumber', phoneNumber);
 
-      const response = await fetch('/api/images', {
+    const [error, result] = await try$(
+      fetch('/api/images', {
         method: 'POST',
         body: formData,
-      });
+      }).then((res) => res.json())
+    );
 
-      const result = await response.json();
+    setIsLoading(false);
 
-      if (result.success) {
-        const newImages = result.urls.map((url: string, index: number) => ({
-          name: images[index].name,
-          url: url,
-        }));
-
-        setUploadedImages([...uploadedImages, ...newImages]);
-        onUpdate({ images: [...uploadedImages, ...newImages] });
-        setImages([]); // Limpiar imágenes pendientes
-        setError('');
-      } else {
-        setError(result.error || 'Error al subir las imágenes');
-      }
-    } catch (error) {
-      console.error('Error al subir imágenes:', error);
-      setError('Error al subir las imágenes');
-    } finally {
-      setIsLoading(false);
+    if (error || !result?.success) {
+      setError(
+        error?.message || result?.error || 'Error al subir las imágenes'
+      );
+      return;
     }
+
+    const newImages = result.urls.map((url: string, index: number) => ({
+      name: images[index].name,
+      url: url,
+    }));
+
+    setUploadedImages([...uploadedImages, ...newImages]);
+    onUpdate({ images: [...uploadedImages, ...newImages] });
+    setImages([]);
+    setError('');
   };
 
   return (

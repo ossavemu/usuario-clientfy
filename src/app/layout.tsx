@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/components/AuthProvider';
+import { TooltipProvider } from '@/components/ui/tooltip';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { Toaster } from 'sonner';
@@ -62,12 +63,14 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-full flex flex-col`}
       >
-        <div className="fixed inset-0 flex flex-col animated-gradient">
-          <div className="flex-none h-16">
-            <AuthProvider />
+        <TooltipProvider>
+          <div className="fixed inset-0 flex flex-col animated-gradient">
+            <div className="flex-none h-16">
+              <AuthProvider />
+            </div>
+            <div className="flex-1 overflow-hidden">{children}</div>
           </div>
-          <div className="flex-1 overflow-hidden">{children}</div>
-        </div>
+        </TooltipProvider>
         <Toaster richColors position="top-right" />
       </body>
     </html>

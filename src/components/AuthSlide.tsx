@@ -1,14 +1,22 @@
 'use client';
 
+import { StripeButton } from '@/components/StripeButton';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SuccessModal } from '@/components/ui/success-modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { useAutoTooltip } from '@/hooks/useAutoTooltip';
 import { validateServicePassword } from '@/lib/passwordService';
 import { type RegistrationData } from '@/types/registration';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Check, Eye, EyeOff, X } from 'lucide-react';
+import { Check, Eye, EyeOff, Home, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -26,7 +34,6 @@ export function UserInfoStep({
   defaultMode = 'register',
 }: UserInfoStepProps) {
   const [error, setError] = useState('');
-  const [showServicePassword, setShowServicePassword] = useState(false);
   const [showUserPassword, setShowUserPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(defaultMode === 'login');
   const [servicePassword, setServicePassword] = useState('');
@@ -35,6 +42,7 @@ export function UserInfoStep({
   const [isLoading, setIsLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
+  const { isOpen, setIsOpen } = useAutoTooltip(0, 0);
 
   // Actualizar el hash cuando cambia la pestaña
   const handleTabChange = (value: string) => {
@@ -192,6 +200,54 @@ export function UserInfoStep({
     router.push('/auth?mode=login');
   };
 
+  const ServicePasswordField = () => {
+    const [showPassword, setShowPassword] = useState(false);
+
+    return (
+      <div className="space-y-2">
+        <Label htmlFor="servicePassword" className="flex items-center gap-2">
+          <span>Contraseña del Servicio</span>
+          <TooltipProvider>
+            <Tooltip open={isOpen} onOpenChange={setIsOpen}>
+              <TooltipTrigger asChild>
+                <span
+                  className="cursor-help text-purple-600 border-b border-dashed border-purple-400 hover:text-purple-700 hover:border-purple-600 transition-colors"
+                  onMouseEnter={() => setIsOpen(true)}
+                  onMouseLeave={() => setIsOpen(false)}
+                >
+                  ¿No tienes una contraseña?
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="p-4 max-w-[300px]">
+                <p className="mb-3">
+                  Recibirás una contraseña de servicio cuando realices el pago
+                </p>
+                <StripeButton />
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </Label>
+        <div className="relative">
+          <Input
+            id="servicePassword"
+            type={showPassword ? 'text' : 'password'}
+            value={servicePassword}
+            onChange={(e) => setServicePassword(e.target.value)}
+            placeholder="Contraseña proporcionada por el servicio"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+          >
+            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       <Tabs
@@ -199,13 +255,37 @@ export function UserInfoStep({
         className="w-full"
         onValueChange={handleTabChange}
       >
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="register">Registro</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-[1fr,1fr,auto] mb-6">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <TabsTrigger value="register">Registro</TabsTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>
+                  Es necesario realizar el pago en Stripe antes de registrarse
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+
+          <Button
+            onClick={() => router.push('/')}
+            variant="ghost"
+            size="icon"
+            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-2"
+          >
+            <Home className="h-5 w-5" />
+          </Button>
         </TabsList>
 
         <TabsContent value="register">
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex justify-center mb-6">
+              <StripeButton />
+            </div>
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre completo</Label>
@@ -246,30 +326,7 @@ export function UserInfoStep({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="servicePassword">Contraseña del Servicio</Label>
-              <div className="relative">
-                <Input
-                  id="servicePassword"
-                  type={showServicePassword ? 'text' : 'password'}
-                  value={servicePassword}
-                  onChange={(e) => setServicePassword(e.target.value)}
-                  placeholder="Contraseña proporcionada por el servicio"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowServicePassword(!showServicePassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showServicePassword ? (
-                    <EyeOff size={20} />
-                  ) : (
-                    <Eye size={20} />
-                  )}
-                </button>
-              </div>
-            </div>
+            <ServicePasswordField />
 
             <div className="space-y-2">
               <Label htmlFor="userPassword">Crear Contraseña Personal</Label>

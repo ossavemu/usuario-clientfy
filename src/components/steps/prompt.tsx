@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { StepNavigation } from '@/components/ui/step-navigation';
 import { Textarea } from '@/components/ui/textarea';
+import { try$ } from '@/lib/try';
 import { type RegistrationData } from '@/types/registration';
 import { RotateCcw, Wand2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -46,6 +47,7 @@ export function PromptStep({
       onUpdate({
         prompt:
           requiredPrefix +
+          ' ' +
           (value.length > 0 ? value.slice(requiredPrefix.length) : ''),
       });
     } else {
@@ -53,37 +55,30 @@ export function PromptStep({
     }
   };
 
-  // Cargar prompt existente solo una vez al montar el componente
   useEffect(() => {
     const loadExistingPrompt = async () => {
       if (!data.countryCode || !data.phone || hasAttemptedLoad || data.prompt)
         return;
 
-      try {
-        const phoneNumber = `${data.countryCode}${data.phone}`.replace(
-          /\+/g,
-          ''
-        );
-        const response = await fetch(`/api/prompt?phoneNumber=${phoneNumber}`);
+      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
 
-        if (response.ok) {
-          const result = await response.json();
-          if (result.success && result.prompt) {
-            onUpdate({ prompt: result.prompt });
-            setExistingPrompt(true);
-          }
-        }
-      } catch (error) {
-        console.error('Error al cargar prompt:', error);
-      } finally {
-        setHasAttemptedLoad(true);
+      const [error, result] = await try$(
+        fetch(`/api/prompt?phoneNumber=${phoneNumber}`).then((res) =>
+          res.json()
+        )
+      );
+
+      if (!error && result?.success && result.prompt) {
+        onUpdate({ prompt: result.prompt });
+        setExistingPrompt(true);
       }
+
+      setHasAttemptedLoad(true);
     };
 
     loadExistingPrompt();
   }, [data.countryCode, data.phone, hasAttemptedLoad, data.prompt, onUpdate]);
 
-  // Guardar prompt
   const handleSave = async () => {
     if (!data.countryCode || !data.phone || !data.prompt) {
       toast.error('Por favor, escribe un prompt antes de guardarlo');
@@ -91,74 +86,74 @@ export function PromptStep({
     }
 
     setIsLoading(true);
-    try {
-      const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
-      const response = await fetch('/api/prompt', {
+    const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
+
+    const [error, result] = await try$(
+      fetch('/api/prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           phoneNumber,
           prompt: data.prompt,
         }),
-      });
+      }).then((res) => res.json())
+    );
 
-      const result = await response.json();
+    setIsLoading(false);
 
-      if (result.success) {
-        toast.success('Prompt guardado exitosamente');
-        setExistingPrompt(true);
-        onNext();
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error('Error al guardar el prompt:', error);
+    if (error || !result?.success) {
       toast.error('Error al guardar el prompt');
-    } finally {
-      setIsLoading(false);
+      return;
     }
+
+    toast.success('Prompt guardado exitosamente');
+    setExistingPrompt(true);
+    onNext();
   };
 
-  // Mejorar prompt con IA
   const handleImprove = async () => {
     if (!data.prompt) {
       toast.error('Por favor, escribe un prompt antes de mejorarlo');
       return;
     }
-    setIsLoading(true);
-    try {
-      setOriginalPrompt(data.prompt);
-      setShowRevert(true);
 
-      const response = await fetch('/api/prompt/improve', {
+    setIsLoading(true);
+    setOriginalPrompt(data.prompt);
+    setShowRevert(true);
+
+    const [error, result] = await try$(
+      fetch('/api/prompt/improve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: data.prompt }),
-      });
+      }).then((res) => res.json())
+    );
 
-      const result = await response.json();
+    setIsLoading(false);
 
-      if (result.success && result.improvedPrompt) {
-        let improvedPrompt = result.improvedPrompt;
-        // Asegurar que el prompt mejorado inicie con el prefijo requerido
-        if (!improvedPrompt.startsWith(requiredPrefix)) {
-          improvedPrompt = requiredPrefix + improvedPrompt;
-        }
-        onUpdate({ prompt: improvedPrompt });
-        toast.success('Prompt mejorado exitosamente');
-      } else {
-        throw new Error(result.error);
-      }
-    } catch (error) {
-      console.error('Error al mejorar el prompt:', error);
+    if (error || !result?.success) {
       toast.error('Error al mejorar el prompt');
       setShowRevert(false);
-    } finally {
-      setIsLoading(false);
+      return;
     }
+
+    let improvedPrompt = result.improvedPrompt;
+
+    if (improvedPrompt.startsWith('Eres un')) {
+      if (data.companyName && !improvedPrompt.includes(data.companyName)) {
+        improvedPrompt = improvedPrompt.replace(
+          /empresa\s+([^\s.,]+)/i,
+          `empresa ${data.companyName}`
+        );
+      }
+    } else {
+      improvedPrompt = requiredPrefix + ' ' + improvedPrompt;
+    }
+
+    onUpdate({ prompt: improvedPrompt });
+    toast.success('Prompt mejorado exitosamente');
   };
 
-  // Revertir cambios
   const handleRevert = () => {
     onUpdate({ prompt: originalPrompt });
     setShowRevert(false);

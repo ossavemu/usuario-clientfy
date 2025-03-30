@@ -109,6 +109,41 @@ export default function RegistrationFlow() {
     loadUserData();
   }, [router, updateFormData]);
 
+  // Detectar el hash de la URL al cargar
+  useEffect(() => {
+    const handleHashChange = () => {
+      // Obtener el hash sin el '#/' inicial
+      const hash = window.location.hash.replace('#/', '').trim();
+
+      // Si no hay hash o está vacío, mostrar el dashboard (paso 0)
+      if (!hash) {
+        setCurrentStep(0);
+        return;
+      }
+
+      // Buscar el índice del paso correspondiente
+      const stepIndex = steps.findIndex((step) => step.path === hash);
+
+      // Si se encontró un paso válido, establecerlo
+      if (stepIndex !== -1) {
+        setCurrentStep(stepIndex);
+      } else {
+        // Si el hash no coincide con ningún paso conocido, mostrar el dashboard
+        console.warn(`Hash no reconocido: ${hash}, mostrando dashboard`);
+        setCurrentStep(0);
+        // Opcionalmente, corregir el hash en la URL
+        window.location.hash = '/';
+      }
+    };
+
+    // Verificar el hash inicial
+    handleHashChange();
+
+    // Escuchar cambios en el hash
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
   // Manejar cierre de sesión
   const handleLogout = async () => {
     try {
