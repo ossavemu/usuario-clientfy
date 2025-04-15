@@ -12,7 +12,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   {
-    ignores: ['package-lock.json'],
+    ignores: ['node_modules/**', 'legacy/**'],
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
@@ -20,6 +20,7 @@ const eslintConfig = [
       'no-relative-import-paths': noRelativeImportPaths,
     },
     rules: {
+      'comma-dangle': ['error', 'always-multiline'],
       '@typescript-eslint/consistent-type-imports': [
         'error',
         { prefer: 'type-imports' },

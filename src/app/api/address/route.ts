@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     if (!email) {
       return NextResponse.json(
         { success: false, error: 'Email no proporcionado' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     console.error('Error al obtener la dirección:', error);
     return NextResponse.json(
       { success: false, error: 'Error al obtener la dirección' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (!email || !address) {
       return NextResponse.json(
         { success: false, error: 'Email y dirección son requeridos' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     console.error('Error al guardar la dirección:', error);
     return NextResponse.json(
       { success: false, error: 'Error al guardar la dirección' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -56,7 +56,7 @@ export async function DELETE(request: NextRequest) {
     if (!email) {
       return NextResponse.json(
         { success: false, error: 'Email no proporcionado' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -66,7 +66,7 @@ export async function DELETE(request: NextRequest) {
     console.error('Error al eliminar la dirección:', error);
     return NextResponse.json(
       { success: false, error: 'Error al eliminar la dirección' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -79,7 +79,7 @@ export async function PUT(request: NextRequest) {
     if (!email || !address) {
       return NextResponse.json(
         { success: false, error: 'Email y dirección son requeridos' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -89,7 +89,7 @@ export async function PUT(request: NextRequest) {
     console.error('Error al actualizar la dirección:', error);
     return NextResponse.json(
       { success: false, error: 'Error al actualizar la dirección' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

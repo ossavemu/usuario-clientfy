@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Token no proporcionado' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -28,14 +28,14 @@ export async function POST(request: Request) {
     } catch (error) {
       return NextResponse.json(
         { error: 'Token inválido', details: error },
-        { status: 401 }
+        { status: 401 },
       );
     }
   } catch (error) {
     console.error('Error en logout:', error);
     return NextResponse.json(
       { error: 'Error al cerrar sesión' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
