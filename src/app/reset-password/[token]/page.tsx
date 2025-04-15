@@ -73,7 +73,7 @@ export default function ResetPasswordPage({
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Error al actualizar la contraseña'
+          : 'Error al actualizar la contraseña',
       );
     } finally {
       setIsLoading(false);

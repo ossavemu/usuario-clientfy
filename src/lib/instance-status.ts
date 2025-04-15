@@ -10,11 +10,11 @@ interface InstanceStatus {
 }
 
 export async function checkInstanceStatus(
-  phone: string
+  phone: string,
 ): Promise<InstanceStatus> {
   const cleanPhone = phone.replace(/\+/g, '');
   const response = await fetch(
-    `/api/instance/status?phone=${encodeURIComponent(cleanPhone)}`
+    `/api/instance/status?phone=${encodeURIComponent(cleanPhone)}`,
   );
   const data = await response.json();
 
@@ -30,7 +30,7 @@ export async function monitorInstanceStatus(
   onStatusChange: (status: InstanceStatus) => void,
   onError: (error: Error) => void,
   email?: string,
-  maxAttempts = 60 // 5 minutos máximo (5s * 60)
+  maxAttempts = 60, // 5 minutos máximo (5s * 60)
 ): Promise<void> {
   let attempts = 0;
   let lastStatus = '';

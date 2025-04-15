@@ -11,7 +11,7 @@ export async function DELETE(request: Request) {
     if (!phoneNumber || !fileName || !type) {
       return NextResponse.json(
         { error: 'Se requieren todos los parámetros' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -21,7 +21,7 @@ export async function DELETE(request: Request) {
     console.error('Error al eliminar archivo:', error);
     return NextResponse.json(
       { error: 'Error al eliminar el archivo', details: error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: 'Todos los campos son requeridos' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     ) {
       return NextResponse.json(
         { error: 'La contraseña personal no cumple con los requisitos' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     if (existingUser) {
       return NextResponse.json(
         { error: 'El usuario ya existe' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
     console.error('Error en registro:', error);
     return NextResponse.json(
       { error: 'Error al registrar usuario' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

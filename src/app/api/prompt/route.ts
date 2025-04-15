@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     if (!phoneNumber) {
       return NextResponse.json(
         { error: 'Se requiere número de teléfono' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,7 +37,7 @@ export async function GET(request: Request) {
       if (error instanceof Error && error.name === 'NoSuchKey') {
         return NextResponse.json(
           { error: 'Prompt no encontrado' },
-          { status: 404 }
+          { status: 404 },
         );
       }
       // Si es otro tipo de error, relanzarlo para que lo maneje el catch exterior
@@ -47,7 +47,7 @@ export async function GET(request: Request) {
     console.error('Error en GET /api/prompt:', error);
     return NextResponse.json(
       { error: 'Error al obtener el prompt', details: error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     if (!phoneNumber || !prompt) {
       return NextResponse.json(
         { error: 'Se requieren número de teléfono y prompt' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       buffer,
       'prompt.txt',
       phoneNumber,
-      'prompt'
+      'prompt',
     );
 
     return NextResponse.json({
@@ -81,7 +81,7 @@ export async function POST(request: Request) {
     console.error('Error en POST /api/prompt:', error);
     return NextResponse.json(
       { error: 'Error al guardar el prompt', details: error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

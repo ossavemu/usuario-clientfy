@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     if (!files.length || !phoneNumber) {
       return NextResponse.json(
         { error: 'Se requieren archivos y número de teléfono' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
           buffer,
           fileName,
           phoneNumber,
-          'training'
+          'training',
         );
         return { success: true, name: fileName, url: result.url };
       } catch (error) {
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     if (successfulUploads.length === 0) {
       return NextResponse.json(
         { error: 'No se pudo subir ningún archivo' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     console.error('Error en POST /api/training-files:', error);
     return NextResponse.json(
       { error: 'Error al subir los archivos', details: error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
     if (!phoneNumber) {
       return NextResponse.json(
         { error: 'Se requiere número de teléfono' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
     console.error('Error en GET /api/training-files:', error);
     return NextResponse.json(
       { error: 'Error al obtener los archivos', details: error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

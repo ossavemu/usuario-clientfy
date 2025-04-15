@@ -9,7 +9,7 @@ export async function POST(request: Request) {
     if (!token || !newPassword) {
       return NextResponse.json(
         { success: false, message: 'Token y nueva contraseña son requeridos' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     if (!resetInfo) {
       return NextResponse.json(
         { success: false, message: 'Token inválido o expirado' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
     if (!userStr) {
       return NextResponse.json(
         { success: false, message: 'Usuario no encontrado' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     console.error('Error actualizando contraseña:', error);
     return NextResponse.json(
       { success: false, message: 'Error al actualizar la contraseña' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

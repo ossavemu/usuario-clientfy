@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     if (!email || !ip) {
       return NextResponse.json(
         { error: 'Se requiere email e IP' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     console.error('Error al guardar la instancia:', error);
     return NextResponse.json(
       { error: 'Error al guardar la instancia' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

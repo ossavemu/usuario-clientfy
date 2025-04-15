@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     if (!files.length || !phoneNumber) {
       return NextResponse.json(
         { error: 'Se requieren archivos y número de teléfono' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
           error: 'Algunas imágenes no pudieron ser subidas',
           urls,
         },
-        { status: 207 }
+        { status: 207 },
       );
     }
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     console.error('Error en POST /api/images:', error);
     return NextResponse.json(
       { error: 'Error al subir las imágenes', details: error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     if (!phoneNumber) {
       return NextResponse.json(
         { error: 'Se requiere número de teléfono' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
     console.error('Error en GET /api/images:', error);
     return NextResponse.json(
       { error: 'Error al obtener las imágenes', details: error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -56,7 +56,7 @@ async function optimizeImage(file: File): Promise<Blob> {
           }
         },
         'image/jpeg',
-        TARGET_QUALITY
+        TARGET_QUALITY,
       );
     };
 
@@ -77,7 +77,7 @@ async function processImageFiles(files: FileList): Promise<ImageFile[]> {
         name: file.name.replace(/\.[^/.]+$/, ''),
         preview: URL.createObjectURL(optimizedFile),
       };
-    })
+    }),
   );
   return processedFiles;
 }
@@ -156,7 +156,7 @@ export function ImageUploadStep({
 
   const handleNameChange = (index: number, newName: string) => {
     setImages((prev) =>
-      prev.map((img, i) => (i === index ? { ...img, name: newName } : img))
+      prev.map((img, i) => (i === index ? { ...img, name: newName } : img)),
     );
   };
 
@@ -190,7 +190,7 @@ export function ImageUploadStep({
       const fileName = `${imageName}.jpg`;
       const response = await fetch(
         `/api/files/delete?phoneNumber=${phoneNumber}&fileName=${fileName}&type=image`,
-        { method: 'DELETE' }
+        { method: 'DELETE' },
       );
       const result = await response.json();
 
@@ -257,7 +257,7 @@ export function ImageUploadStep({
       setError('');
     } catch (error) {
       setError(
-        error instanceof Error ? error.message : 'Error al subir las imágenes'
+        error instanceof Error ? error.message : 'Error al subir las imágenes',
       );
     } finally {
       setIsLoading(false);

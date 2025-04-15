@@ -7,13 +7,13 @@ export async function POST(request: Request) {
     if (!email || !password) {
       return NextResponse.json(
         { success: false, message: 'Email y contraseña son requeridos' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     console.log(
       'Intentando validar en:',
-      `${process.env.ORQUESTA_URL}/api/password/validate`
+      `${process.env.ORQUESTA_URL}/api/password/validate`,
     );
 
     const response = await fetch(
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
           'x-api-key': process.env.SECRET_KEY || '',
         },
         body: JSON.stringify({ email, password }),
-      }
+      },
     );
 
     const responseText = await response.text();
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
           isValid: false,
           message: 'Error procesando respuesta del servidor',
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
         isValid: false,
         message: 'Error al conectar con el servicio de validación',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

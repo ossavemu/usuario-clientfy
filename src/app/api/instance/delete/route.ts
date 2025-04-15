@@ -22,7 +22,7 @@ async function deleteDroplet(dropletName: string): Promise<boolean> {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${DO_TOKEN}`,
         },
-      }
+      },
     );
 
     if (!dropletsResponse.ok) {
@@ -31,7 +31,7 @@ async function deleteDroplet(dropletName: string): Promise<boolean> {
 
     const dropletsData = await dropletsResponse.json();
     const droplet = dropletsData.droplets.find(
-      (d: Droplet) => d.name === dropletName
+      (d: Droplet) => d.name === dropletName,
     );
 
     if (!droplet) {
@@ -47,7 +47,7 @@ async function deleteDroplet(dropletName: string): Promise<boolean> {
         headers: {
           Authorization: `Bearer ${DO_TOKEN}`,
         },
-      }
+      },
     );
 
     if (!deleteResponse.ok) {
@@ -69,7 +69,7 @@ export async function DELETE(request: Request) {
     if (!email && !numberphone) {
       return NextResponse.json(
         { error: 'Se requiere email o número de teléfono' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -93,7 +93,7 @@ export async function DELETE(request: Request) {
     console.error('❌ Error al eliminar la instancia:', error);
     return NextResponse.json(
       { error: 'Error al eliminar la instancia' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

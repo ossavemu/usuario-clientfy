@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     if (!authHeader?.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: 'Token no proporcionado' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     if (!user) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 

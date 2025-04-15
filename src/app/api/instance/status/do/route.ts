@@ -24,7 +24,7 @@ export async function GET(request: Request) {
     if (!dropletName) {
       return NextResponse.json(
         { error: 'Nombre del droplet es requerido' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     if (!DO_TOKEN) {
       return NextResponse.json(
         { error: 'DO_TOKEN no configurado' },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -45,14 +45,14 @@ export async function GET(request: Request) {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${DO_TOKEN}`,
         },
-      }
+      },
     );
 
     if (!dropletsResponse.ok) {
       const errorText = await dropletsResponse.text();
       return NextResponse.json(
         { error: 'Error consultando DigitalOcean', details: errorText },
-        { status: dropletsResponse.status }
+        { status: dropletsResponse.status },
       );
     }
 
@@ -71,7 +71,7 @@ export async function GET(request: Request) {
 
     // Buscar la red pública (v4) del droplet
     const publicNetwork = foundDroplet.networks.v4.find(
-      (net: DropletNetwork) => net.type === 'public'
+      (net: DropletNetwork) => net.type === 'public',
     );
 
     if (!publicNetwork) {
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
     console.error('Error al obtener la IP desde DO:', error);
     return NextResponse.json(
       { error: 'Error al obtener la IP', details: error },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

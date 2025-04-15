@@ -54,7 +54,7 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
         setHasCheckedPhone(true);
       }
     },
-    [onUpdate, hasCheckedPhone]
+    [onUpdate, hasCheckedPhone],
   );
 
   useEffect(() => {
@@ -233,7 +233,7 @@ export function PhoneStep({ data, onUpdate, onNext, onBack }: PhoneStepProps) {
                     <SelectValue placeholder="México (+52)" />
                   </SelectTrigger>
                   <SelectContent
-                    className="w-[240px] z-[100]"
+                    className="w-[240px] z-100"
                     position="popper"
                     side="bottom"
                     sideOffset={4}

@@ -80,7 +80,7 @@ export async function POST(request: Request) {
     if (!reqData?.prompt) {
       return NextResponse.json(
         { error: 'Se requiere el prompt' },
-        { status: 400 }
+        { status: 400 },
       );
     }
   } catch (error) {
@@ -90,12 +90,12 @@ export async function POST(request: Request) {
           error: 'Error al obtener los datos de la solicitud',
           details: error.message,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
     return NextResponse.json(
       { error: 'Error al obtener los datos de la solicitud' },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -109,12 +109,12 @@ export async function POST(request: Request) {
     if (error instanceof Error) {
       return NextResponse.json(
         { error: 'Error al mejorar el prompt', details: error.message },
-        { status: 500 }
+        { status: 500 },
       );
     }
     return NextResponse.json(
       { error: 'Error desconocido al mejorar el prompt' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -56,7 +56,7 @@ export async function createDroplet({
 
 export async function waitForDropletActive(
   dropletId: number,
-  maxAttempts = 30
+  maxAttempts = 30,
 ) {
   const DO_API_URL = 'https://api.digitalocean.com/v2';
   const token = process.env.DO_TOKEN;

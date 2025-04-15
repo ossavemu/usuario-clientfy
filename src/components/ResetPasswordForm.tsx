@@ -33,7 +33,7 @@ export function ResetPasswordForm() {
       }
 
       toast.success(
-        'Se ha enviado un enlace de restablecimiento a tu correo electrónico'
+        'Se ha enviado un enlace de restablecimiento a tu correo electrónico',
       );
       setEmail('');
       setServicePassword('');
@@ -41,7 +41,7 @@ export function ResetPasswordForm() {
       toast.error(
         error instanceof Error
           ? error.message
-          : 'Error al procesar la solicitud'
+          : 'Error al procesar la solicitud',
       );
     } finally {
       setIsLoading(false);

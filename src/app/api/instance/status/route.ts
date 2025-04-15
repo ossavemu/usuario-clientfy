@@ -39,7 +39,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             progress: 0,
           },
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         headers: {
           'x-api-key': API_KEY || '',
         },
-      }
+      },
     );
 
     console.log('📡 Estado de la respuesta:', response.status);

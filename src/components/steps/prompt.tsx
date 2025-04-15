@@ -142,7 +142,7 @@ export function PromptStep({
         if (data.companyName && !improvedPrompt.includes(data.companyName)) {
           improvedPrompt = improvedPrompt.replace(
             /empresa\s+([^\s.,]+)/i,
-            `empresa ${data.companyName}`
+            `empresa ${data.companyName}`,
           );
         }
       } else {
@@ -203,7 +203,7 @@ export function PromptStep({
         {existingPrompt && (
           <div className="bg-green-50 border-l-4 border-green-400 p-4">
             <div className="flex">
-              <div className="flex-shrink-0">
+              <div className="shrink-0">
                 <svg
                   className="h-5 w-5 text-green-400"
                   viewBox="0 0 20 20"

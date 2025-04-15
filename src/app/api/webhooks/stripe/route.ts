@@ -6,7 +6,7 @@ const API_URL = process.env.ORQUESTA_URL;
 const API_KEY = process.env.SECRET_KEY;
 // Configurar Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2025-02-24.acacia',
+  apiVersion: '2025-03-31.basil',
 });
 
 // Desactivar el body parser
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           success: false,
           error: 'Formato de evento inválido',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(
-          `Error en la API de generación de contraseña: ${errorText}`
+          `Error en la API de generación de contraseña: ${errorText}`,
         );
       }
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           error instanceof Error ? error.message : 'Error desconocido'
         }`,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

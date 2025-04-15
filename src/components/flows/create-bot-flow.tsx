@@ -32,13 +32,13 @@ export function CreateBotFlow({
 }: CreateBotFlowProps) {
   const { setIsCreatingBot } = useBotCreation();
   const [isCreating, setIsCreating] = useState(
-    existingInstance?.exists ?? false
+    existingInstance?.exists ?? false,
   );
   const [instanceIp, setInstanceIp] = useState<string | null>(
-    existingInstance?.ip ?? null
+    existingInstance?.ip ?? null,
   );
   const [isLinked, setIsLinked] = useState(
-    (existingInstance?.exists && !existingInstance?.hasQr) ?? false
+    (existingInstance?.exists && !existingInstance?.hasQr) ?? false,
   );
   const [showConfirmActivationModal, setShowConfirmActivationModal] =
     useState(false);
@@ -191,7 +191,7 @@ export function CreateBotFlow({
             toast.error('Error al verificar el estado del asistente');
             setIsCreating(false);
           },
-          userEmail
+          userEmail,
         );
       } catch (error) {
         console.error('Error en el monitoreo:', error);
@@ -215,7 +215,7 @@ export function CreateBotFlow({
         const elapsedTime = 240 - timeLeft;
         const calculatedProgress = Math.min(
           Math.floor((elapsedTime / 240) * 100),
-          100
+          100,
         );
         setProgress(calculatedProgress);
       }, 1000);
@@ -290,7 +290,7 @@ export function CreateBotFlow({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-white rounded-lg p-3 shadow-sm relative">
+              <div className="bg-white rounded-lg p-3 shadow-xs relative">
                 <WhatsAppQR
                   instanceIp={instanceIp}
                   isLinked={isLinked}

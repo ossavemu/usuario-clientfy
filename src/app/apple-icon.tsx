@@ -28,6 +28,6 @@ export default function Icon() {
         C
       </div>
     ),
-    size
+    size,
   );
 }

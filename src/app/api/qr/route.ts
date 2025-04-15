@@ -28,7 +28,7 @@ export async function GET(request: Request) {
     console.error('Error en proxy QR:', error);
     return NextResponse.json(
       { error: 'Error al obtener el código QR' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email y contraseña son requeridos' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     if (!userStr) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     if (!isValidPassword) {
       return NextResponse.json(
         { error: 'Contraseña incorrecta' },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     console.error('Error en login:', error);
     return NextResponse.json(
       { error: 'Error al iniciar sesión' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

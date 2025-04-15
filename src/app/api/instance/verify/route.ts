@@ -68,7 +68,7 @@ export async function GET(request: Request) {
     console.error('Error al verificar instancia:', error);
     return NextResponse.json(
       { error: 'Error al verificar instancia' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

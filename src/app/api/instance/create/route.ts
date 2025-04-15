@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const activeDroplet = await waitForDropletActive(droplet.id);
     const ip = Array.isArray(activeDroplet.networks.v4)
       ? activeDroplet.networks.v4.find(
-          (net: { type: string }) => net.type === 'public'
+          (net: { type: string }) => net.type === 'public',
         )?.ip_address
       : undefined;
     if (!ip) throw new Error('No se pudo obtener la IP de la instancia');
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
       { success: false, error: errorMessage },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

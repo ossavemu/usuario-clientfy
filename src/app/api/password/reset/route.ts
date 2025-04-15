@@ -10,7 +10,7 @@ export async function POST(request: Request) {
           success: false,
           message: 'Email y contraseña de servicio son requeridos',
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
           'x-api-key': process.env.SECRET_KEY || '',
         },
         body: JSON.stringify({ email, servicePassword }),
-      }
+      },
     );
 
     const data = await response.json();
@@ -34,7 +34,7 @@ export async function POST(request: Request) {
           success: false,
           message: data.message || 'Error al procesar la solicitud',
         },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     console.error('Error en reset password:', error);
     return NextResponse.json(
       { success: false, message: 'Error al procesar la solicitud' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

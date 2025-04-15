@@ -45,7 +45,7 @@ export function WelcomeSlide() {
   return (
     <div className="w-full max-w-md mx-auto">
       <motion.div
-        className="bg-white/80 backdrop-blur-sm rounded-3xl"
+        className="bg-white/80 backdrop-blur-xs rounded-3xl"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
@@ -58,7 +58,7 @@ export function WelcomeSlide() {
             transition={{ delay: 0.2, duration: 0.8 }}
             className="text-center"
           >
-            <h1 className="text-4xl font-semibold bg-gradient-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent mb-3">
+            <h1 className="text-4xl font-semibold bg-linear-to-r from-purple-600 to-purple-500 bg-clip-text text-transparent mb-3">
               ClientFy
             </h1>
             <p className="text-base text-gray-600/90 max-w-xs mx-auto">
@@ -78,7 +78,7 @@ export function WelcomeSlide() {
                 <TooltipTrigger asChild>
                   <Button
                     onClick={() => router.push('/auth')}
-                    className="flex-1 bg-purple-600 hover:bg-purple-500 py-6 flex items-center justify-center gap-2 transition-all duration-300 rounded-2xl shadow-sm"
+                    className="flex-1 bg-purple-600 hover:bg-purple-500 py-6 flex items-center justify-center gap-2 transition-all duration-300 rounded-2xl shadow-xs"
                     onMouseEnter={() => setIsOpen(true)}
                     onMouseLeave={() => setIsOpen(false)}
                   >
@@ -89,7 +89,7 @@ export function WelcomeSlide() {
                 <TooltipContent
                   side="top"
                   sideOffset={5}
-                  className="z-50 bg-white/95 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg"
+                  className="z-50 bg-white/95 backdrop-blur-xs px-3 py-2 rounded-lg shadow-lg"
                 >
                   <p className="text-sm text-gray-700">
                     Es necesario realizar el pago antes de registrarse

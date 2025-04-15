@@ -44,10 +44,10 @@ export function TrainingFilesStep({
         try {
           const phoneNumber = `${data.countryCode}${data.phone}`.replace(
             /\+/g,
-            ''
+            '',
           );
           const response = await fetch(
-            `/api/training-files?phoneNumber=${phoneNumber}`
+            `/api/training-files?phoneNumber=${phoneNumber}`,
           );
           const result = await response.json();
 
@@ -96,7 +96,7 @@ export function TrainingFilesStep({
 
   const updateFileName = useCallback((id: string, newName: string) => {
     setPendingFiles((prev) =>
-      prev.map((file) => (file.id === id ? { ...file, name: newName } : file))
+      prev.map((file) => (file.id === id ? { ...file, name: newName } : file)),
     );
   }, []);
 
@@ -114,7 +114,7 @@ export function TrainingFilesStep({
       });
       formData.append(
         'phoneNumber',
-        `${data.countryCode}${data.phone}`.replace(/\+/g, '')
+        `${data.countryCode}${data.phone}`.replace(/\+/g, ''),
       );
 
       const response = await fetch('/api/training-files', {
@@ -147,7 +147,7 @@ export function TrainingFilesStep({
       const phoneNumber = `${data.countryCode}${data.phone}`.replace(/\+/g, '');
       const response = await fetch(
         `/api/files/delete?phoneNumber=${phoneNumber}&fileName=${fileName}&type=training`,
-        { method: 'DELETE' }
+        { method: 'DELETE' },
       );
 
       const result = await response.json();

@@ -23,7 +23,7 @@ export async function uploadFile(
   buffer: Buffer,
   fileName: string,
   phoneNumber: string,
-  type: 'image' | 'training' | 'prompt' = 'image'
+  type: 'image' | 'training' | 'prompt' = 'image',
 ) {
   try {
     if (type === 'training' && buffer.length > MAX_FILE_SIZE) {
@@ -37,7 +37,7 @@ export async function uploadFile(
         Bucket: BUCKET_NAME,
         Key: key,
         Body: buffer,
-      })
+      }),
     );
 
     // Generar URL firmada con 1 hora de expiración
@@ -47,7 +47,7 @@ export async function uploadFile(
         Bucket: BUCKET_NAME,
         Key: key,
       }),
-      { expiresIn: 3600 }
+      { expiresIn: 3600 },
     );
 
     return { success: true, url };
@@ -59,14 +59,14 @@ export async function uploadFile(
 
 export async function getUserFiles(
   phoneNumber: string,
-  type: 'image' | 'training' | 'prompt' = 'image'
+  type: 'image' | 'training' | 'prompt' = 'image',
 ) {
   try {
     const files = await s3Client.send(
       new ListObjectsV2Command({
         Bucket: BUCKET_NAME,
         Prefix: `${phoneNumber}/${type}/`,
-      })
+      }),
     );
 
     if (!files.Contents) {
@@ -84,10 +84,10 @@ export async function getUserFiles(
             Bucket: BUCKET_NAME,
             Key: file.Key,
           }),
-          { expiresIn: 3600 }
+          { expiresIn: 3600 },
         );
         return { name, url };
-      })
+      }),
     );
 
     return { success: true, files: filesWithUrls };
@@ -100,7 +100,7 @@ export async function getUserFiles(
 export async function deleteFile(
   phoneNumber: string,
   fileName: string,
-  type: 'image' | 'training' | 'prompt' = 'image'
+  type: 'image' | 'training' | 'prompt' = 'image',
 ) {
   try {
     const key = `${phoneNumber}/${type}/${fileName}`;
@@ -109,7 +109,7 @@ export async function deleteFile(
       new DeleteObjectCommand({
         Bucket: BUCKET_NAME,
         Key: key,
-      })
+      }),
     );
 
     return { success: true };

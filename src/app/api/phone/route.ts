@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     if (existingPhone) {
       return NextResponse.json(
         { error: 'Ya tienes un número registrado' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     console.error('Error en POST /api/phone:', error);
     return NextResponse.json(
       { error: 'Error al guardar el teléfono' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -39,7 +39,7 @@ export async function PUT(request: Request) {
     console.error('Error en PUT /api/phone:', error);
     return NextResponse.json(
       { error: 'Error al actualizar el teléfono' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -52,7 +52,7 @@ export async function DELETE(request: Request) {
     if (!email) {
       return NextResponse.json(
         { error: 'Email es requerido' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -62,7 +62,7 @@ export async function DELETE(request: Request) {
     console.error('Error en DELETE /api/phone:', error);
     return NextResponse.json(
       { error: 'Error al eliminar el teléfono' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
     if (!email) {
       return NextResponse.json(
         { error: 'Email es requerido' },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -85,7 +85,7 @@ export async function GET(request: Request) {
     console.error('Error en GET /api/phone:', error);
     return NextResponse.json(
       { error: 'Error al obtener el teléfono' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

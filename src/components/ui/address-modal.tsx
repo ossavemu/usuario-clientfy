@@ -26,7 +26,7 @@ export function AddressModal({
   useEffect(() => {
     const countryInfo = countries.find(
       (c: { value: string; label: string; code: string }) =>
-        c.value === countryCode
+        c.value === countryCode,
     );
     if (countryInfo) {
       setCountry(countryInfo.label);
@@ -51,9 +51,9 @@ export function AddressModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999]">
+    <div className="fixed inset-0 z-9999">
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 bg-black/50 backdrop-blur-xs"
         onClick={onClose}
         style={{ position: 'fixed', top: 0, right: 0, bottom: 0, left: 0 }}
       />
@@ -82,7 +82,7 @@ export function AddressModal({
                   value={street}
                   onChange={(e) => setStreet(e.target.value)}
                   placeholder="Ej: KR 8B 9 61 o CALLE 2 9B 64"
-                  className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 pl-10 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
                 <MapPin className="w-5 h-5 text-gray-400 absolute left-3 top-2.5" />
               </div>
@@ -95,7 +95,7 @@ export function AddressModal({
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="Ej: CALI o CANCUN"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
             </div>
 

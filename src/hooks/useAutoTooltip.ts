@@ -18,7 +18,7 @@ export const useAutoTooltip = (initialDelay = 500, duration = 3000) => {
       clearTimeout(showTimer);
       clearTimeout(hideTimer);
     };
-  }, []); // Solo se ejecuta una vez al montar el componente
+  }, [duration, initialDelay]); // Solo se ejecuta una vez al montar el componente
 
   return {
     isOpen,

@@ -95,7 +95,7 @@ export function UserInfoStep({
         // Validar contraseña del servicio
         const validationResult = await validateServicePassword(
           data.email,
-          servicePassword
+          servicePassword,
         );
 
         console.log('Resultado de validación:', validationResult); // Para depuración
@@ -255,7 +255,7 @@ export function UserInfoStep({
         className="w-full"
         onValueChange={handleTabChange}
       >
-        <TabsList className="grid w-full grid-cols-[1fr,1fr,auto] mb-6">
+        <TabsList className="grid w-full grid-cols-[1fr_1fr_auto] mb-6">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>

@@ -54,7 +54,7 @@ function StepCard({
       case 'optional':
         return 'bg-purple-50/50 border-purple-200 hover:border-purple-300';
       case 'special':
-        return 'bg-gradient-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800';
+        return 'bg-linear-to-r from-purple-500 to-purple-700 text-white hover:from-purple-600 hover:to-purple-800';
     }
   };
 
@@ -126,7 +126,7 @@ function StepCard({
         </Card>
       </motion.div>
       {!isLast && (
-        <div className="absolute left-5 top-full h-4 w-0.5 bg-gradient-to-b from-purple-300 to-purple-100" />
+        <div className="absolute left-5 top-full h-4 w-0.5 bg-linear-to-b from-purple-300 to-purple-100" />
       )}
     </div>
   );
@@ -171,7 +171,7 @@ export function DashboardSlide({
 
           // Verificar instancia existente
           const instanceResponse = await fetch(
-            `/api/instance/verify?email=${userEmail}`
+            `/api/instance/verify?email=${userEmail}`,
           );
           const instanceData = await instanceResponse.json();
           setHasExistingBot(instanceData.exists && instanceData.isActive);
@@ -185,26 +185,26 @@ export function DashboardSlide({
           const phoneNumber =
             `${phoneData.phone.countryCode}${phoneData.phone.phone}`.replace(
               /\+/g,
-              ''
+              '',
             );
 
           // Verificar prompt
           const promptResponse = await fetch(
-            `/api/prompt?phoneNumber=${phoneNumber}`
+            `/api/prompt?phoneNumber=${phoneNumber}`,
           );
           const promptData = await promptResponse.json();
           const hasPrompt = promptData.success && promptData.prompt;
 
           // Verificar imágenes
           const imagesResponse = await fetch(
-            `/api/images?phoneNumber=${phoneNumber}`
+            `/api/images?phoneNumber=${phoneNumber}`,
           );
           const imagesData = await imagesResponse.json();
           const hasImages = imagesData.success && imagesData.images?.length > 0;
 
           // Verificar archivos de entrenamiento
           const trainingResponse = await fetch(
-            `/api/training-files?phoneNumber=${phoneNumber}`
+            `/api/training-files?phoneNumber=${phoneNumber}`,
           );
           const trainingData = await trainingResponse.json();
           const hasTraining =
@@ -268,7 +268,7 @@ export function DashboardSlide({
   const hasPrompt = Boolean(data?.prompt);
   const hasImages = Boolean(data?.images && data?.images.length > 0);
   const hasTrainingFiles = Boolean(
-    data?.trainingFiles && data?.trainingFiles.length > 0
+    data?.trainingFiles && data?.trainingFiles.length > 0,
   );
 
   // Log para verificar los estados calculados
