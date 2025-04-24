@@ -5,11 +5,12 @@ import { jwtDecode } from 'jwt-decode';
 import { Home, LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Dispatch, SetStateAction } from 'react';
-import {
+import React, {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -28,11 +29,18 @@ export const BotCreationContext = createContext<{
 
 export const useBotCreation = () => useContext(BotCreationContext);
 
-export function AuthProvider({ children }: AuthProviderProps) {
+export const AuthProvider = React.memo(function AuthProvider({
+  children,
+}: AuthProviderProps) {
   const router = useRouter();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreatingBot, setIsCreatingBot] = useState(false);
+
+  const botCreationContextValue = useMemo(
+    () => ({ isCreatingBot, setIsCreatingBot }),
+    [isCreatingBot, setIsCreatingBot],
+  );
 
   const validateSession = useCallback(async (token: string) => {
     try {
@@ -40,6 +48,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        // Evitar caché en la validación
+        cache: 'no-store',
       });
 
       if (!response.ok) {
@@ -145,7 +155,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   return (
-    <BotCreationContext.Provider value={{ isCreatingBot, setIsCreatingBot }}>
+    <BotCreationContext.Provider value={botCreationContextValue}>
       {isAuthenticated && (
         <div className="absolute top-0 right-0 p-4 z-50 flex gap-2">
           <Button
@@ -177,4 +187,4 @@ export function AuthProvider({ children }: AuthProviderProps) {
       {children}
     </BotCreationContext.Provider>
   );
-}
+});

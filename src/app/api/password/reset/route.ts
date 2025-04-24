@@ -1,3 +1,6 @@
+import { sendPasswordResetEmail } from '@/lib/email/password';
+import { createPasswordResetToken } from '@/lib/turso/password';
+import { validateServicePassword } from '@/lib/turso/servicePassword';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -14,31 +17,53 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await fetch(
-      `${process.env.ORQUESTA_URL}/api/password/reset`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.SECRET_KEY || '',
-        },
-        body: JSON.stringify({ email, servicePassword }),
-      },
+    // Validar la contraseña de servicio
+    const isValidPassword = await validateServicePassword(
+      email,
+      servicePassword,
     );
 
-    const data = await response.json();
-
-    if (!response.ok) {
+    if (!isValidPassword) {
       return NextResponse.json(
         {
           success: false,
-          message: data.message || 'Error al procesar la solicitud',
+          message: 'Credenciales inválidas',
         },
-        { status: response.status },
+        { status: 401 },
       );
     }
 
-    return NextResponse.json(data);
+    // Crear token de restablecimiento
+    const resetToken = await createPasswordResetToken(email);
+
+    if (!resetToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Error al generar token de restablecimiento',
+        },
+        { status: 500 },
+      );
+    }
+
+    // Enviar email con el token
+    try {
+      await sendPasswordResetEmail(email, resetToken);
+    } catch (emailError) {
+      console.error('Error al enviar email de restablecimiento:', emailError);
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Error al enviar email de restablecimiento',
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Se ha enviado un enlace de restablecimiento a tu correo',
+    });
   } catch (error) {
     console.error('Error en reset password:', error);
     return NextResponse.json(

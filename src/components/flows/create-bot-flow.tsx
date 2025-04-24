@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ConfirmDeleteModal } from '@/components/ui/confirm-delete-modal';
 import { WhatsAppQR } from '@/components/ui/whatsapp-qr';
 import { useAddress } from '@/hooks/use-address';
-import { monitorInstanceStatus } from '@/lib/instance-status';
+import { monitorInstanceStatus } from '@/lib/do/instanceStatus';
 import { Bot, QrCode, RotateCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';

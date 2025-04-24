@@ -1,4 +1,4 @@
-import { redis } from '@/lib/redis';
+import { deleteInstance } from '@/lib/turso/instance';
 import { NextResponse } from 'next/server';
 
 interface Droplet {
@@ -79,10 +79,10 @@ export async function DELETE(request: Request) {
       await deleteDroplet(dropletName);
     }
 
-    // Si tenemos el email, borramos de Redis
+    // Si tenemos el email, borramos de Turso
     if (email) {
-      await redis.del(`instance:${email}`);
-      console.log('✅ Registro eliminado de Redis para:', email);
+      await deleteInstance(email);
+      console.log('✅ Registro eliminado de Turso para:', email);
     }
 
     return NextResponse.json({

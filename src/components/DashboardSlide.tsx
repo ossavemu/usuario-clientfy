@@ -1,7 +1,7 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { countries } from '@/constants/countries';
+import { countries } from '@/lib/constants/countries';
 import { type RegistrationData } from '@/types/registration';
 import { motion } from 'framer-motion';
 import {
@@ -16,7 +16,7 @@ import {
   Rocket,
   Sparkles,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface DashboardSlideProps {
   data: RegistrationData;
@@ -36,7 +36,7 @@ interface StepCardProps {
   isLast?: boolean;
 }
 
-function StepCard({
+const StepCard = React.memo(function StepCard({
   icon,
   title,
   description = '',
@@ -90,6 +90,7 @@ function StepCard({
   return (
     <div className="relative">
       <motion.div
+        layout
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay, duration: 0.5 }}
@@ -130,7 +131,7 @@ function StepCard({
       )}
     </div>
   );
-}
+});
 
 const capitalizeWords = (name: string) => {
   return name
@@ -138,6 +139,11 @@ const capitalizeWords = (name: string) => {
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 };
+
+// Si no existe el componente Skeleton, defino uno mínimo aquí
+const Skeleton = ({ className = '' }) => (
+  <div className={`animate-pulse bg-gray-200 ${className}`} />
+);
 
 export function DashboardSlide({
   data,
@@ -151,15 +157,56 @@ export function DashboardSlide({
   const [hasExistingBot, setHasExistingBot] = useState(false);
   const [hasCheckedData, setHasCheckedData] = useState(false);
 
+  // Verificar datos locales de manera más precisa
+  const hasPhone = Boolean(data?.phone && data?.countryCode);
+  const hasPrompt = Boolean(data?.prompt);
+  const hasImages = Boolean(data?.images && data?.images.length > 0);
+  const hasTrainingFiles = Boolean(
+    data?.trainingFiles && data?.trainingFiles.length > 0,
+  );
+
+  const phoneIcon = useMemo(() => <Phone className="w-5 h-5" />, []);
+  const botIcon = useMemo(() => <Bot className="w-5 h-5" />, []);
+  const imageIcon = useMemo(() => <ImageIcon className="w-5 h-5" />, []);
+  const fileIcon = useMemo(() => <FileText className="w-5 h-5" />, []);
+  const loaderIcon = useMemo(
+    () => <Loader2 className="w-5 h-5 animate-spin" />,
+    [],
+  );
+  const rocketIcon = useMemo(() => <Rocket className="w-5 h-5" />, []);
+  const finalIcon = useMemo(() => {
+    if (isVerifyingBot) return loaderIcon;
+    if (hasExistingBot) return botIcon;
+    return rocketIcon;
+  }, [isVerifyingBot, hasExistingBot, botIcon, loaderIcon, rocketIcon]);
+
+  const handlePhoneClick = useCallback(() => onNavigate(1), [onNavigate]);
+  const handleBotClick = useCallback(() => onNavigate(2), [onNavigate]);
+  const handleImageClick = useCallback(() => onNavigate(3), [onNavigate]);
+  const handleFileClick = useCallback(() => onNavigate(4), [onNavigate]);
+  const handleFinalClick = useCallback(() => {
+    if (!isVerifyingBot) {
+      if (hasExistingBot || canCreateBot) {
+        onNavigate(5);
+      } else if (!hasPhone) {
+        onNavigate(1);
+      } else if (!hasPrompt) {
+        onNavigate(2);
+      }
+    }
+  }, [
+    isVerifyingBot,
+    hasExistingBot,
+    canCreateBot,
+    hasPhone,
+    hasPrompt,
+    onNavigate,
+  ]);
+
   useEffect(() => {
     const verifyBotData = async () => {
-      if (!userEmail || hasCheckedData) {
-        setIsVerifyingBot(false);
-        return;
-      }
-
       try {
-        // Verificar teléfono en Redis
+        // Petición de teléfono
         const phoneResponse = await fetch(`/api/phone?email=${userEmail}`);
         const phoneData = await phoneResponse.json();
         if (phoneData.success && phoneData.phone) {
@@ -168,49 +215,41 @@ export function DashboardSlide({
             countryCode: phoneData.phone.countryCode,
             serviceType: phoneData.phone.serviceType,
           });
-
-          // Verificar instancia existente
-          const instanceResponse = await fetch(
-            `/api/instance/verify?email=${userEmail}`,
-          );
-          const instanceData = await instanceResponse.json();
-          setHasExistingBot(instanceData.exists && instanceData.isActive);
-
-          // Se puede crear bot si hay teléfono y no hay bot existente
-          setCanCreateBot(!instanceData.exists);
         }
 
-        // Solo verificar S3 si hay teléfono
         if (phoneData.phone) {
-          const phoneNumber =
-            `${phoneData.phone.countryCode}${phoneData.phone.phone}`.replace(
-              /\+/g,
+          let phoneNumber = phoneData.phone.phone;
+          if (
+            !phoneNumber.startsWith(
+              phoneData.phone.countryCode.replace('+', ''),
+            )
+          ) {
+            phoneNumber = `${phoneData.phone.countryCode.replace(
+              '+',
               '',
-            );
-
-          // Verificar prompt
-          const promptResponse = await fetch(
-            `/api/prompt?phoneNumber=${phoneNumber}`,
-          );
-          const promptData = await promptResponse.json();
+            )}${phoneNumber}`;
+          }
+          // Paralelizar todas las peticiones
+          const [instanceRes, promptRes, imagesRes, trainingRes] =
+            await Promise.all([
+              fetch(`/api/instance/verify?email=${userEmail}`),
+              fetch(`/api/prompt?phoneNumber=${phoneNumber}`),
+              fetch(`/api/images?phoneNumber=${phoneNumber}`),
+              fetch(`/api/training-files?phoneNumber=${phoneNumber}`),
+            ]);
+          const [instanceData, promptData, imagesData, trainingData] =
+            await Promise.all([
+              instanceRes.json(),
+              promptRes.json(),
+              imagesRes.json(),
+              trainingRes.json(),
+            ]);
+          setHasExistingBot(instanceData.exists && instanceData.isActive);
+          setCanCreateBot(!instanceData.exists);
           const hasPrompt = promptData.success && promptData.prompt;
-
-          // Verificar imágenes
-          const imagesResponse = await fetch(
-            `/api/images?phoneNumber=${phoneNumber}`,
-          );
-          const imagesData = await imagesResponse.json();
           const hasImages = imagesData.success && imagesData.images?.length > 0;
-
-          // Verificar archivos de entrenamiento
-          const trainingResponse = await fetch(
-            `/api/training-files?phoneNumber=${phoneNumber}`,
-          );
-          const trainingData = await trainingResponse.json();
           const hasTraining =
             trainingData.success && trainingData.files?.length > 0;
-
-          // Actualizar el estado con los datos reales
           onUpdate({
             prompt: hasPrompt ? promptData.prompt : data.prompt,
             images: hasImages ? imagesData.images : data.images,
@@ -226,7 +265,6 @@ export function DashboardSlide({
         setHasCheckedData(true);
       }
     };
-
     verifyBotData();
   }, [
     userEmail,
@@ -263,14 +301,6 @@ export function DashboardSlide({
 
   const greeting = getGreeting();
 
-  // Verificar datos locales de manera más precisa
-  const hasPhone = Boolean(data?.phone && data?.countryCode);
-  const hasPrompt = Boolean(data?.prompt);
-  const hasImages = Boolean(data?.images && data?.images.length > 0);
-  const hasTrainingFiles = Boolean(
-    data?.trainingFiles && data?.trainingFiles.length > 0,
-  );
-
   // Log para verificar los estados calculados
   useEffect(() => {
     console.log('Estados calculados:', {
@@ -292,6 +322,16 @@ export function DashboardSlide({
       ? `${data.countryCode}${data.phone}`
       : null;
 
+  // Skeletons para feedback visual
+  const SkeletonLine = () => (
+    <div className="flex items-center gap-2 text-sm">
+      <Skeleton className="w-4 h-4 rounded-full bg-gray-200" />
+      <Skeleton className="h-4 w-24 bg-gray-200 rounded" />
+    </div>
+  );
+
+  const skeletonLine = useMemo(() => <SkeletonLine />, []);
+
   return (
     <div className="space-y-6">
       <motion.div
@@ -308,15 +348,8 @@ export function DashboardSlide({
         </button>
         <h2 className={`text-2xl font-bold ${greeting.color}`}>
           {greeting.text}
-          {data?.name ? (
-            <span>, {capitalizeWords(data.name)}</span>
-          ) : (
-            (() => {
-              console.log('No hay nombre disponible:', data);
-              return null;
-            })()
-          )}
-          !{greeting.emoji}
+          {data?.name ? <span>, {capitalizeWords(data.name)}</span> : null}!
+          {greeting.emoji}
         </h2>
       </motion.div>
 
@@ -326,83 +359,85 @@ export function DashboardSlide({
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2 }}
       >
-        {formattedPhone && (
-          <div className="flex items-center gap-2 text-sm">
-            <Globe className="w-4 h-4 text-purple-600" />
-            <span className="text-gray-600">País:</span>
-            <span className="font-medium">
-              {countries.find((c) => c.value === data.countryCode)?.label ||
-                'Desconocido'}
-            </span>
-          </div>
-        )}
-        <div className="flex items-center gap-2 text-sm">
-          <Mail className="w-4 h-4 text-purple-600" />
-          <span className="text-gray-600">Email:</span>
-          <span className="font-medium">{userEmail}</span>
-        </div>
-        {formattedPhone && (
-          <div className="flex items-center gap-2 text-sm">
-            <Phone className="w-4 h-4 text-purple-600" />
-            <span className="text-gray-600">Teléfono:</span>
-            <span className="font-medium">{formattedPhone}</span>
-          </div>
-        )}
-        {data.companyName && (
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-600">Empresa:</span>
-            <span className="font-medium text-xs">{data.companyName}</span>
-          </div>
+        {isVerifyingBot ? (
+          <>
+            {skeletonLine}
+            {skeletonLine}
+            {skeletonLine}
+          </>
+        ) : (
+          <>
+            {formattedPhone && (
+              <div className="flex items-center gap-2 text-sm">
+                <Globe className="w-4 h-4 text-purple-600" />
+                <span className="text-gray-600">País:</span>
+                <span className="font-medium">
+                  {countries.find((c) => c.value === data.countryCode)?.label ||
+                    'Desconocido'}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-sm">
+              <Mail className="w-4 h-4 text-purple-600" />
+              <span className="text-gray-600">Email:</span>
+              <span className="font-medium">{userEmail}</span>
+            </div>
+            {formattedPhone && (
+              <div className="flex items-center gap-2 text-sm">
+                <Phone className="w-4 h-4 text-purple-600" />
+                <span className="text-gray-600">Teléfono:</span>
+                <span className="font-medium">{formattedPhone}</span>
+              </div>
+            )}
+            {data.companyName && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-gray-600">Empresa:</span>
+                <span className="font-medium text-xs">{data.companyName}</span>
+              </div>
+            )}
+          </>
         )}
       </motion.div>
 
       <div className="space-y-3">
         <StepCard
-          icon={<Phone className="w-5 h-5" />}
+          icon={phoneIcon}
           title="Registro de Celular"
           description=""
           status={hasPhone ? 'completed' : 'pending'}
-          onClick={() => onNavigate(1)}
+          onClick={handlePhoneClick}
           delay={0.3}
         />
 
         <StepCard
-          icon={<Bot className="w-5 h-5" />}
+          icon={botIcon}
           title="Configura tu Asistente"
           description=""
           status={hasPrompt ? 'completed' : 'pending'}
-          onClick={() => onNavigate(2)}
+          onClick={handleBotClick}
           delay={0.4}
         />
 
         <StepCard
-          icon={<ImageIcon className="w-5 h-5" />}
+          icon={imageIcon}
           title="Imágenes del Asistente"
           description=""
           status={hasImages ? 'completed' : 'optional'}
-          onClick={() => onNavigate(3)}
+          onClick={handleImageClick}
           delay={0.5}
         />
 
         <StepCard
-          icon={<FileText className="w-5 h-5" />}
+          icon={fileIcon}
           title="Archivos de Entrenamiento"
           description=""
           status={hasTrainingFiles ? 'completed' : 'optional'}
-          onClick={() => onNavigate(4)}
+          onClick={handleFileClick}
           delay={0.6}
         />
 
         <StepCard
-          icon={
-            isVerifyingBot ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : hasExistingBot ? (
-              <Bot className="w-5 h-5" />
-            ) : (
-              <Rocket className="w-5 h-5" />
-            )
-          }
+          icon={finalIcon}
           title={
             isVerifyingBot
               ? 'Verificando información...'
@@ -422,17 +457,7 @@ export function DashboardSlide({
               ? 'special'
               : 'pending'
           }
-          onClick={() => {
-            if (!isVerifyingBot) {
-              if (hasExistingBot || canCreateBot) {
-                onNavigate(5);
-              } else if (!hasPhone) {
-                onNavigate(1);
-              } else if (!hasPrompt) {
-                onNavigate(2);
-              }
-            }
-          }}
+          onClick={handleFinalClick}
           delay={0.7}
           isLast={true}
         />

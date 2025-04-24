@@ -1,8 +1,8 @@
-import { redis } from '@/lib/redis';
+import { deleteSession } from '@/lib/turso/session';
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.SECRET_KEY || 'your-secret-key';
 
 export async function POST(request: Request) {
   try {
@@ -21,15 +21,13 @@ export async function POST(request: Request) {
       // Verificar que el token sea válido
       jwt.verify(token, JWT_SECRET);
 
-      // Eliminar la sesión de Redis
-      await redis.del(`session:${email}`);
+      // Eliminar la sesión de Turso
+      await deleteSession(email);
 
       return NextResponse.json({ message: 'Sesión cerrada exitosamente' });
-    } catch (error) {
-      return NextResponse.json(
-        { error: 'Token inválido', details: error },
-        { status: 401 },
-      );
+    } catch (jwtError) {
+      console.error('Error al verificar token JWT:', jwtError);
+      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
   } catch (error) {
     console.error('Error en logout:', error);

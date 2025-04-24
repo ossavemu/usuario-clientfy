@@ -1,4 +1,8 @@
-import { redis } from '@/lib/redis';
+import {
+  deleteUserAddress,
+  getUserAddress,
+  saveUserAddress,
+} from '@/lib/turso/operations';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
@@ -14,7 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const address = await redis.hget(`user:${email}`, 'address');
+    const address = await getUserAddress(email);
     return NextResponse.json({ success: true, address });
   } catch (error) {
     console.error('Error al obtener la dirección:', error);
@@ -37,7 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await redis.hset(`user:${email}`, 'address', address);
+    await saveUserAddress(email, address);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error al guardar la dirección:', error);
@@ -60,7 +64,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    await redis.hdel(`user:${email}`, 'address');
+    await deleteUserAddress(email);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error al eliminar la dirección:', error);
@@ -83,7 +87,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await redis.hset(`user:${email}`, 'address', address);
+    await saveUserAddress(email, address);
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error al actualizar la dirección:', error);

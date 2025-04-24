@@ -1,9 +1,10 @@
+import { sendServicePasswordEmail } from '@/lib/email/password';
+import { executeQuery } from '@/lib/turso/client';
+import { createServicePassword } from '@/lib/turso/servicePassword';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 
-const API_URL = process.env.ORQUESTA_URL;
-const API_KEY = process.env.SECRET_KEY;
 // Configurar Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
   apiVersion: '2025-03-31.basil',
@@ -67,25 +68,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       console.log(`📧 Email del cliente: ${email}`);
 
-      // Llamar a la API para generar la contraseña
-      const response = await fetch(`${API_URL}/api/password/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY as string,
-        },
-        body: JSON.stringify({ email }),
-      });
+      // Verificar si el usuario ya existe en la base de datos
+      const userExists = await executeQuery(
+        'SELECT email FROM users WHERE email = ?',
+        [email],
+      );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(
-          `Error en la API de generación de contraseña: ${errorText}`,
-        );
+      if (userExists.rows.length === 0) {
+        // El usuario aún no se ha registrado, generamos una contraseña de servicio
+        try {
+          // Generar contraseña de servicio directamente con Turso
+          const password = await createServicePassword(email);
+
+          // Enviar la contraseña por correo electrónico
+          await sendServicePasswordEmail(email, password);
+
+          console.log('✅ Contraseña generada y enviada correctamente');
+        } catch (error) {
+          console.error('❌ Error generando contraseña:', error);
+          throw new Error('Error al generar la contraseña');
+        }
+      } else {
+        console.log('⚠️ El usuario ya existe, no se genera nueva contraseña');
       }
-
-      const data = await response.json();
-      console.log('✅ Contraseña generada correctamente:', data);
 
       return NextResponse.json({ success: true, received: true });
     }

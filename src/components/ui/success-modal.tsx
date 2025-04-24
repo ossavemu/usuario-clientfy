@@ -1,13 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
+import React from 'react';
 
 interface SuccessModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function SuccessModal({ isOpen, onClose }: SuccessModalProps) {
+export const SuccessModal = React.memo(function SuccessModal({
+  isOpen,
+  onClose,
+}: SuccessModalProps) {
   if (!isOpen) return null;
 
   return (
@@ -36,4 +40,4 @@ export function SuccessModal({ isOpen, onClose }: SuccessModalProps) {
       </motion.div>
     </div>
   );
-}
+});

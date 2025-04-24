@@ -1,4 +1,4 @@
-import { setInstanceIp } from '@/lib/redis';
+import { saveInstanceIp } from '@/lib/turso/instance';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -12,7 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
-    await setInstanceIp(email, ip);
+    await saveInstanceIp(email, ip);
 
     return NextResponse.json({
       success: true,

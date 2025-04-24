@@ -1,3 +1,4 @@
+import { validateServicePassword } from '@/lib/turso/servicePassword';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -11,43 +12,10 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(
-      'Intentando validar en:',
-      `${process.env.ORQUESTA_URL}/api/password/validate`,
-    );
+    // Validar contraseña de servicio con Turso
+    const isValid = await validateServicePassword(email, password);
 
-    const response = await fetch(
-      `${process.env.ORQUESTA_URL}/api/password/validate`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.SECRET_KEY || '',
-        },
-        body: JSON.stringify({ email, password }),
-      },
-    );
-
-    const responseText = await response.text();
-    console.log('Respuesta completa del servidor:', responseText);
-
-    let data;
-    try {
-      data = JSON.parse(responseText);
-    } catch (e) {
-      console.error('Error parseando respuesta:', e);
-      return NextResponse.json(
-        {
-          success: false,
-          isValid: false,
-          message: 'Error procesando respuesta del servidor',
-        },
-        { status: 500 },
-      );
-    }
-
-    // Si la respuesta es exitosa pero isValid es false
-    if (data.success && !data.isValid) {
+    if (!isValid) {
       return NextResponse.json({
         success: true,
         isValid: false,
@@ -55,15 +23,18 @@ export async function POST(request: Request) {
       });
     }
 
-    // Si todo está bien
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error completo:', error);
+    // Contraseña válida
+    return NextResponse.json({
+      success: true,
+      isValid: true,
+      message: 'Contraseña de servicio válida',
+    });
+  } catch {
     return NextResponse.json(
       {
         success: false,
         isValid: false,
-        message: 'Error al conectar con el servicio de validación',
+        message: 'Error al validar contraseña de servicio',
       },
       { status: 500 },
     );

@@ -1,4 +1,4 @@
-import { deleteFile } from '@/lib/s3Storage';
+import { deleteFile } from '@/lib/s3/training/delete';
 import { NextResponse } from 'next/server';
 
 export async function DELETE(request: Request) {

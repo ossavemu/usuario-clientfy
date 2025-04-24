@@ -13,6 +13,11 @@ const compat = new FlatCompat({
 const eslintConfig = [
   {
     ignores: ['node_modules/**', 'legacy/**'],
+    languageOptions: {
+      globals: {
+        bun: 'readonly',
+      },
+    },
   },
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {

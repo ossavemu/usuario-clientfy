@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useAutoTooltip } from '@/hooks/useAutoTooltip';
 import { CreditCard } from 'lucide-react';
+import React, { useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 
 interface StripeButtonProps {
@@ -16,39 +17,40 @@ interface StripeButtonProps {
   tooltipSide?: 'top' | 'right' | 'bottom' | 'left';
 }
 
-export function StripeButton({
+const StripeButton = React.memo(function StripeButton({
   showTooltip = false,
   tooltipSide = 'top',
 }: StripeButtonProps) {
   const { isOpen, setIsOpen } = useAutoTooltip();
 
-  const handlePayment = async () => {
+  const handlePayment = useCallback(async () => {
     try {
       const response = await fetch('/api/buy');
       if (!response.ok) {
         throw new Error('Error en la respuesta del servidor');
       }
-
       const data = await response.json();
       if (!data?.url) {
         throw new Error('URL de pago no encontrada');
       }
-
       window.location.href = data.url;
     } catch (error) {
       console.error('Error al procesar el pago:', error);
       toast.error('Error al procesar el pago');
     }
-  };
+  }, []);
 
-  const button = (
-    <Button
-      onClick={handlePayment}
-      className="w-full bg-[#635BFF] hover:bg-[#4B45C6] text-white font-medium py-6 rounded-lg transition-all duration-200"
-    >
-      <CreditCard className="w-5 h-5 mr-2" />
-      Pagar con Stripe
-    </Button>
+  const button = useMemo(
+    () => (
+      <Button
+        onClick={handlePayment}
+        className="w-full bg-[#635BFF] hover:bg-[#4B45C6] text-white font-medium py-6 rounded-lg transition-all duration-200"
+      >
+        <CreditCard className="w-5 h-5 mr-2" />
+        Pagar con Stripe
+      </Button>
+    ),
+    [handlePayment],
   );
 
   if (!showTooltip) return button;
@@ -63,4 +65,6 @@ export function StripeButton({
       </Tooltip>
     </TooltipProvider>
   );
-}
+});
+
+export { StripeButton };

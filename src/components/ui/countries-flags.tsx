@@ -1,4 +1,4 @@
-import { countries as availableCountries } from '@/constants/countries';
+import { countries as availableCountries } from '@/lib/constants/countries';
 
 const generateFlag = (code: string) => {
   switch (code) {

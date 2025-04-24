@@ -1,4 +1,4 @@
-import { getInstanceIp, redis } from '@/lib/redis';
+import { deleteInstance, getInstanceIp } from '@/lib/turso/instance';
 import { NextResponse } from 'next/server';
 
 const timeout = (ms: number) =>
@@ -39,8 +39,8 @@ export async function GET(request: Request) {
     const isActive = await checkPanel(ip);
 
     if (!isActive) {
-      // Si el panel no está activo, eliminamos la IP de Redis
-      await redis.del(`instance:${email}`);
+      // Si el panel no está activo, eliminamos la instancia de Turso
+      await deleteInstance(email);
       return NextResponse.json({ exists: false });
     }
 

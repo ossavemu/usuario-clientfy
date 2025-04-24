@@ -1,46 +1,30 @@
-import { BUCKET_NAME, s3Client, uploadFile } from '@/lib/s3Storage';
-import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { getPrompt } from '@/lib/s3/prompt/get';
+import { savePrompt } from '@/lib/s3/prompt/save';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const phoneNumber = searchParams.get('phoneNumber');
-
     if (!phoneNumber) {
       return NextResponse.json(
         { error: 'Se requiere número de teléfono' },
         { status: 400 },
       );
     }
-
-    // Intentar obtener el archivo directamente sin verificar si existe primero
     try {
-      const getObjectCommand = new GetObjectCommand({
-        Bucket: BUCKET_NAME,
-        Key: `${phoneNumber}/prompt/prompt.txt`,
-      });
-
-      const response = await s3Client.send(getObjectCommand);
-      const promptContent = await response.Body?.transformToString();
-
-      if (!promptContent) {
-        throw new Error('No se pudo leer el contenido del prompt');
-      }
-
+      const promptContent = await getPrompt(phoneNumber);
       return NextResponse.json({
         success: true,
         prompt: promptContent,
       });
     } catch (error) {
-      // Si el error es porque el archivo no existe, devolver 404
       if (error instanceof Error && error.name === 'NoSuchKey') {
         return NextResponse.json(
           { error: 'Prompt no encontrado' },
           { status: 404 },
         );
       }
-      // Si es otro tipo de error, relanzarlo para que lo maneje el catch exterior
       throw error;
     }
   } catch (error) {
@@ -55,22 +39,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { phoneNumber, prompt } = await request.json();
-
     if (!phoneNumber || !prompt) {
       return NextResponse.json(
         { error: 'Se requieren número de teléfono y prompt' },
         { status: 400 },
       );
     }
-
-    const buffer = Buffer.from(prompt, 'utf-8');
-    const result = await uploadFile(
-      buffer,
-      'prompt.txt',
-      phoneNumber,
-      'prompt',
-    );
-
+    const result = await savePrompt(phoneNumber, prompt);
     return NextResponse.json({
       success: true,
       message: 'Prompt guardado exitosamente',

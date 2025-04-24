@@ -1,4 +1,5 @@
-import { getUserFiles, uploadFile } from '@/lib/s3Storage';
+import { getUserFiles } from '@/lib/s3/training/get';
+import { uploadFile } from '@/lib/s3/training/upload';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {

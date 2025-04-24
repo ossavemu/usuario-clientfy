@@ -1,16 +1,13 @@
-import {
-  deleteUserPhone,
-  getUserPhone,
-  saveUserPhone,
-  updateUserPhone,
-} from '@/lib/serverUtils';
+import { deleteUserPhone } from '@/lib/user/deletePhone';
+import { getUserPhone } from '@/lib/user/getPhone';
+import { saveUserPhone } from '@/lib/user/savePhone';
+import { updateUserPhone } from '@/lib/user/updatePhone';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const { email, phoneData } = await request.json();
 
-    // Verificar si ya existe un teléfono registrado
     const existingPhone = await getUserPhone(email);
     if (existingPhone) {
       return NextResponse.json(

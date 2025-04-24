@@ -1,0 +1,14 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Configuración de Bun y Estilo de Código
+
+El proyecto utiliza Bun como gestor de paquetes y entorno de ejecución. Revisa [bun.lockb](mdc:bun.lockb) para dependencias y bloqueos.
+
+La gestión de sesiones se encuentra en [src/lib/turso/session.ts](mdc:src/lib/turso/session.ts).
+
+La configuración de formato y linting está en [src/lib/turso/session.ts](mdc:src/lib/turso/session.ts) y [.vscode/settings.json](mdc:.vscode/settings.json).
+
+El código generado por la IA debe tener la menor cantidad de comentarios posible.

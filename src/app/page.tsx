@@ -2,9 +2,9 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { WelcomeSlide } from '@/components/WelcomeSlide';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 
-export default function Home() {
+const Home = function Home() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     const isLoginAttempt = window.location.hash.includes('user-info');
@@ -24,4 +24,6 @@ export default function Home() {
       </Card>
     </div>
   );
-}
+};
+
+export default React.memo(Home);

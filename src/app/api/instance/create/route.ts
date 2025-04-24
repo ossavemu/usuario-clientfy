@@ -1,4 +1,6 @@
-import { createDroplet, waitForDropletActive } from '@/lib/digitalocean';
+import { DO_CONFIG } from '@/lib/config';
+import { createDroplet } from '@/lib/do/create';
+import { waitForDropletActive } from '@/lib/do/wait';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -6,36 +8,53 @@ export async function POST(request: Request) {
     const { numberphone, companyName, address, features } =
       await request.json();
     const cleanPhone = numberphone.replace(/\+/g, '');
-    const password = process.env.DIGITALOCEAN_SSH_PASSWORD;
+    const password = DO_CONFIG.SSH_PASSWORD;
     if (!password) throw new Error('DIGITALOCEAN_SSH_PASSWORD no configurada');
 
     const instanceName = `bot-${cleanPhone}`;
 
-    const droplet = await createDroplet({
-      instanceName,
-      numberphone: cleanPhone,
-      companyName,
-      address,
-      features,
-      password,
-    });
+    console.log('🚀 Iniciando creación de instancia:', instanceName);
 
-    const activeDroplet = await waitForDropletActive(droplet.id);
-    const ip = Array.isArray(activeDroplet.networks.v4)
-      ? activeDroplet.networks.v4.find(
-          (net: { type: string }) => net.type === 'public',
-        )?.ip_address
-      : undefined;
-    if (!ip) throw new Error('No se pudo obtener la IP de la instancia');
+    try {
+      console.log('🔄 Creando droplet en DigitalOcean...');
+      const droplet = await createDroplet({
+        instanceName,
+        numberphone: cleanPhone,
+        companyName,
+        address,
+        features,
+        password,
+      });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        ip,
-        status: 'creating',
-        progress: 0,
-      },
-    });
+      console.log('⏳ Esperando a que el droplet esté activo...');
+      const activeDroplet = await waitForDropletActive(droplet.id);
+      const ip = Array.isArray(activeDroplet.networks.v4)
+        ? activeDroplet.networks.v4.find(
+            (net: { type: string }) => net.type === 'public',
+          )?.ip_address
+        : undefined;
+
+      if (!ip) {
+        throw new Error('No se pudo obtener la IP de la instancia');
+      }
+
+      console.log('✅ Droplet activo con IP:', ip);
+      console.log('🔧 Iniciando configuración del servidor...');
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          ip,
+          status: 'configuring',
+          progress: 75,
+        },
+      });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Error desconocido';
+      console.error('❌ Error en creación de instancia:', errorMessage);
+      throw error;
+    }
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Error desconocido';

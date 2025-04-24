@@ -1,5 +1,6 @@
-import { redis } from '@/lib/redis';
-import bcrypt from 'bcryptjs';
+import { ENCRYPT_ALGORITHM, SALT_ROUNDS } from '@/lib/constants/encrypt';
+import { executeQuery } from '@/lib/turso/client';
+import { getUser, saveUser } from '@/lib/turso/operations';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -13,37 +14,47 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar el token en Redis
-    const resetInfo = await redis.get(`reset:${token}`);
-    if (!resetInfo) {
+    // Verificar el token en Turso
+    const result = await executeQuery(
+      'SELECT * FROM password_resets WHERE token = ? AND expires_at > CURRENT_TIMESTAMP',
+      [token],
+    );
+
+    if (!result.rows || result.rows.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Token inválido o expirado' },
         { status: 400 },
       );
     }
 
-    const { email } = JSON.parse(resetInfo);
+    const email = result.rows[0].email as string;
 
     // Encriptar la nueva contraseña
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await Bun.password.hash(newPassword, {
+      algorithm: ENCRYPT_ALGORITHM,
+      cost: SALT_ROUNDS,
+    });
 
-    // Actualizar la contraseña en Redis
-    const userStr = await redis.hget('users', email);
-    if (!userStr) {
+    // Obtener usuario de Turso
+    const user = await getUser(email);
+    if (!user) {
       return NextResponse.json(
         { success: false, message: 'Usuario no encontrado' },
         { status: 404 },
       );
     }
 
-    const user = JSON.parse(userStr);
-    user.password = hashedPassword;
+    // Actualizar contraseña
+    const updatedUser = {
+      ...user,
+      password: hashedPassword,
+    };
 
     // Guardar usuario actualizado
-    await redis.hset('users', email, JSON.stringify(user));
+    await saveUser(updatedUser);
 
     // Eliminar el token de reset
-    await redis.del(`reset:${token}`);
+    await executeQuery('DELETE FROM password_resets WHERE token = ?', [token]);
 
     return NextResponse.json({
       success: true,

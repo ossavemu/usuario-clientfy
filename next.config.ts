@@ -1,7 +1,8 @@
+import MillionLint from '@million/lint';
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  serverExternalPackages: ['bun'],
 };
 
-export default nextConfig;
+export default MillionLint.next({ rsc: true })(nextConfig);

@@ -2,14 +2,13 @@
 
 import { StripeButton } from '@/components/StripeButton';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Input as RawInput } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SuccessModal } from '@/components/ui/success-modal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { useAutoTooltip } from '@/hooks/useAutoTooltip';
@@ -18,8 +17,10 @@ import { type RegistrationData } from '@/types/registration';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, Eye, EyeOff, Home, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+
+const Input = React.memo(RawInput);
 
 interface UserInfoStepProps {
   data: RegistrationData;
@@ -28,7 +29,7 @@ interface UserInfoStepProps {
   defaultMode?: 'login' | 'register';
 }
 
-export function UserInfoStep({
+export const UserInfoStep = React.memo(function UserInfoStep({
   data,
   onUpdate,
   defaultMode = 'register',
@@ -43,16 +44,78 @@ export function UserInfoStep({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const router = useRouter();
   const { isOpen, setIsOpen } = useAutoTooltip(0, 0);
+  const [showPassword, setShowPassword] = useState(false);
+  const eyeOffIcon = useMemo(() => <EyeOff size={20} />, []);
+  const eyeIcon = useMemo(() => <Eye size={20} />, []);
+  const [showStripeMsg, setShowStripeMsg] = useState(!isLogin);
+
+  useEffect(() => {
+    if (!isLogin) {
+      setShowStripeMsg(true);
+      const timer = setTimeout(() => setShowStripeMsg(false), 3000);
+      return () => clearTimeout(timer);
+    } else {
+      setShowStripeMsg(false);
+    }
+  }, [isLogin]);
+
+  const tooltipServicePassword = useMemo(
+    () => (
+      <Tooltip open={isOpen} onOpenChange={setIsOpen}>
+        <TooltipTrigger asChild>
+          <span
+            className="cursor-help text-purple-600 border-b border-dashed border-purple-400 hover:text-purple-700 hover:border-purple-600 transition-colors"
+            onMouseEnter={() => setIsOpen(true)}
+            onMouseLeave={() => setIsOpen(false)}
+          >
+            ¿No tienes una contraseña?
+          </span>
+        </TooltipTrigger>
+        <TooltipContent className="p-4 max-w-[300px]">
+          <p className="mb-3">
+            Recibirás una contraseña de servicio al correo electrónico cuando
+            realices el pago
+          </p>
+          <StripeButton />
+        </TooltipContent>
+      </Tooltip>
+    ),
+    [isOpen, setIsOpen],
+  );
 
   // Actualizar el hash cuando cambia la pestaña
-  const handleTabChange = (value: string) => {
-    const newIsLogin = value === 'login';
-    setIsLogin(newIsLogin);
-    setError('');
-    setUserPassword('');
-    setServicePassword('');
-    router.push(`/auth${newIsLogin ? '?mode=login' : ''}`);
-  };
+  const handleTabChange = useCallback(
+    (value: string) => {
+      const newIsLogin = value === 'login';
+      setIsLogin(newIsLogin);
+      setError('');
+      setUserPassword('');
+      setServicePassword('');
+      router.push(`/auth${newIsLogin ? '?mode=login' : ''}`);
+    },
+    [router],
+  );
+
+  const handleNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({ name: e.target.value });
+    },
+    [onUpdate],
+  );
+
+  const handleCompanyNameChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({ companyName: e.target.value });
+    },
+    [onUpdate],
+  );
+
+  const handleEmailChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      onUpdate({ email: e.target.value });
+    },
+    [onUpdate],
+  );
 
   const validatePassword = (password: string) => {
     const minLength = password.length >= 8;
@@ -190,109 +253,195 @@ export function UserInfoStep({
     }
   };
 
-  const handleSuccessModalClose = () => {
+  const handleSuccessModalClose = useCallback(() => {
     setShowSuccessModal(false);
-    // Limpiar los campos
     setServicePassword('');
     setUserPassword('');
-    // Cambiar a la pestaña de login
     setIsLogin(true);
     router.push('/auth?mode=login');
+  }, [router]);
+
+  // Campo de contraseña de servicio sin memoización
+  const handleServicePasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setServicePassword(e.target.value);
   };
 
-  const ServicePasswordField = () => {
-    const [showPassword, setShowPassword] = useState(false);
-
-    return (
-      <div className="space-y-2">
-        <Label htmlFor="servicePassword" className="flex items-center gap-2">
-          <span>Contraseña del Servicio</span>
-          <TooltipProvider>
-            <Tooltip open={isOpen} onOpenChange={setIsOpen}>
-              <TooltipTrigger asChild>
-                <span
-                  className="cursor-help text-purple-600 border-b border-dashed border-purple-400 hover:text-purple-700 hover:border-purple-600 transition-colors"
-                  onMouseEnter={() => setIsOpen(true)}
-                  onMouseLeave={() => setIsOpen(false)}
-                >
-                  ¿No tienes una contraseña?
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="p-4 max-w-[300px]">
-                <p className="mb-3">
-                  Recibirás una contraseña de servicio cuando realices el pago
-                </p>
-                <StripeButton />
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </Label>
-        <div className="relative">
-          <Input
-            id="servicePassword"
-            type={showPassword ? 'text' : 'password'}
-            value={servicePassword}
-            onChange={(e) => setServicePassword(e.target.value)}
-            placeholder="Contraseña proporcionada por el servicio"
-            required
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-          >
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </button>
-        </div>
+  const servicePasswordField = (
+    <div className="space-y-2">
+      <Label htmlFor="servicePassword" className="flex items-center gap-2">
+        <span>Contraseña del Servicio</span>
+        {tooltipServicePassword}
+      </Label>
+      <div className="relative">
+        <Input
+          id="servicePassword"
+          type={showPassword ? 'text' : 'password'}
+          value={servicePassword}
+          onChange={handleServicePasswordChange}
+          placeholder="Contraseña proporcionada por el servicio"
+          required
+        />
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+        >
+          {showPassword ? eyeOffIcon : eyeIcon}
+        </button>
       </div>
-    );
-  };
+    </div>
+  );
+
+  const handleHomeClick = useCallback(() => router.push('/'), [router]);
+
+  const homeButton = useMemo(
+    () => (
+      <Button
+        onClick={handleHomeClick}
+        variant="ghost"
+        size="icon"
+        className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-2"
+      >
+        <Home className="h-5 w-5" />
+      </Button>
+    ),
+    [handleHomeClick],
+  );
+
+  const passwordValidationBlock = useMemo(
+    () => (
+      <AnimatePresence>
+        {(isUserPasswordFocused || userPassword.length > 0) && (
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            transition={{ duration: 0.2 }}
+            className="flex justify-center items-center space-x-4 mt-2 pt-2"
+          >
+            <div className="flex items-center space-x-1 text-xs">
+              {passwordValidation.minLength ? (
+                <Check size={16} className="text-green-500" />
+              ) : (
+                <X size={16} className="text-red-500" />
+              )}
+              <span>Mínimo 8 caracteres</span>
+            </div>
+            <div className="flex items-center space-x-1 text-xs">
+              {passwordValidation.hasLetter ? (
+                <Check size={16} className="text-green-500" />
+              ) : (
+                <X size={16} className="text-red-500" />
+              )}
+              <span>Al menos una letra</span>
+            </div>
+            <div className="flex items-center space-x-1 text-xs">
+              {passwordValidation.hasNumber ? (
+                <Check size={16} className="text-green-500" />
+              ) : (
+                <X size={16} className="text-red-500" />
+              )}
+              <span>Al menos un número</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    ),
+    [
+      isUserPasswordFocused,
+      userPassword.length,
+      passwordValidation.minLength,
+      passwordValidation.hasLetter,
+      passwordValidation.hasNumber,
+    ],
+  );
+
+  const submitButton = useMemo(
+    () => (
+      <Button
+        type="submit"
+        className="w-full"
+        disabled={isLoading || (!isLogin && !passwordValidation.isValid)}
+      >
+        {isLoading ? (
+          <div className="flex items-center justify-center">
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+            {isLogin ? 'Iniciando sesión...' : 'Registrando...'}
+          </div>
+        ) : isLogin ? (
+          'Iniciar Sesión'
+        ) : (
+          'Registrarse'
+        )}
+      </Button>
+    ),
+    [isLoading, isLogin, passwordValidation.isValid],
+  );
+
+  const errorBlock = useMemo(
+    () => (
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="text-sm text-red-500"
+          >
+            {error}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    ),
+    [error],
+  );
+
+  const handleUserPasswordChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setUserPassword(e.target.value);
+    },
+    [],
+  );
+  const handleUserPasswordFocus = useCallback(
+    () => setIsUserPasswordFocused(true),
+    [],
+  );
+  const handleUserPasswordBlur = useCallback(
+    () => setIsUserPasswordFocused(false),
+    [],
+  );
 
   return (
     <>
+      {showStripeMsg && (
+        <div className="mb-4 p-3 rounded bg-yellow-50 text-yellow-800 text-center text-sm font-medium border border-yellow-200">
+          Es necesario realizar el pago en Stripe antes de registrarse
+        </div>
+      )}
       <Tabs
         value={isLogin ? 'login' : 'register'}
         className="w-full"
         onValueChange={handleTabChange}
       >
         <TabsList className="grid w-full grid-cols-[1fr_1fr_auto] mb-6">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <TabsTrigger value="register">Registro</TabsTrigger>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>
-                  Es necesario realizar el pago en Stripe antes de registrarse
-                </p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <TabsTrigger value="register">Registro</TabsTrigger>
           <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-
-          <Button
-            onClick={() => router.push('/')}
-            variant="ghost"
-            size="icon"
-            className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-2"
-          >
-            <Home className="h-5 w-5" />
-          </Button>
+          {homeButton}
         </TabsList>
-
         <TabsContent value="register">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex justify-center mb-6">
               <StripeButton />
             </div>
-
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nombre completo</Label>
                 <Input
                   id="name"
                   value={data.name}
-                  onChange={(e) => onUpdate({ name: e.target.value })}
+                  onChange={handleNameChange}
                   placeholder="Tu nombre"
                   required
                 />
@@ -302,13 +451,12 @@ export function UserInfoStep({
                 <Input
                   id="companyName"
                   value={data.companyName}
-                  onChange={(e) => onUpdate({ companyName: e.target.value })}
+                  onChange={handleCompanyNameChange}
                   placeholder="Nombre de tu empresa"
                   required
                 />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="email">
                 Correo electrónico{' '}
@@ -320,14 +468,12 @@ export function UserInfoStep({
                 id="email"
                 type="email"
                 value={data.email}
-                onChange={(e) => onUpdate({ email: e.target.value })}
+                onChange={handleEmailChange}
                 placeholder="correo@ejemplo.com"
                 required
               />
             </div>
-
-            <ServicePasswordField />
-
+            {servicePasswordField}
             <div className="space-y-2">
               <Label htmlFor="userPassword">Crear Contraseña Personal</Label>
               <div className="relative">
@@ -335,9 +481,9 @@ export function UserInfoStep({
                   id="userPassword"
                   type={showUserPassword ? 'text' : 'password'}
                   value={userPassword}
-                  onChange={(e) => setUserPassword(e.target.value)}
-                  onFocus={() => setIsUserPasswordFocused(true)}
-                  onBlur={() => setIsUserPasswordFocused(false)}
+                  onChange={handleUserPasswordChange}
+                  onFocus={handleUserPasswordFocus}
+                  onBlur={handleUserPasswordBlur}
                   placeholder="Crea una contraseña segura"
                   required
                 />
@@ -346,79 +492,15 @@ export function UserInfoStep({
                   onClick={() => setShowUserPassword(!showUserPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showUserPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showUserPassword ? eyeOffIcon : eyeIcon}
                 </button>
               </div>
-              <AnimatePresence>
-                {(isUserPasswordFocused || userPassword.length > 0) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex justify-center items-center space-x-4 mt-2 pt-2"
-                  >
-                    <div className="flex items-center space-x-1 text-xs">
-                      {passwordValidation.minLength ? (
-                        <Check size={16} className="text-green-500" />
-                      ) : (
-                        <X size={16} className="text-red-500" />
-                      )}
-                      <span>Mínimo 8 caracteres</span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-xs">
-                      {passwordValidation.hasLetter ? (
-                        <Check size={16} className="text-green-500" />
-                      ) : (
-                        <X size={16} className="text-red-500" />
-                      )}
-                      <span>Al menos una letra</span>
-                    </div>
-                    <div className="flex items-center space-x-1 text-xs">
-                      {passwordValidation.hasNumber ? (
-                        <Check size={16} className="text-green-500" />
-                      ) : (
-                        <X size={16} className="text-red-500" />
-                      )}
-                      <span>Al menos un número</span>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {passwordValidationBlock}
             </div>
-
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-sm text-red-500"
-                >
-                  {error}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading || (!isLogin && !passwordValidation.isValid)}
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  {isLogin ? 'Iniciando sesión...' : 'Registrando...'}
-                </div>
-              ) : isLogin ? (
-                'Iniciar Sesión'
-              ) : (
-                'Registrarse'
-              )}
-            </Button>
+            {errorBlock}
+            {submitButton}
           </form>
         </TabsContent>
-
         <TabsContent value="login">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
@@ -427,12 +509,11 @@ export function UserInfoStep({
                 id="email"
                 type="email"
                 value={data.email}
-                onChange={(e) => onUpdate({ email: e.target.value })}
+                onChange={handleEmailChange}
                 placeholder="correo@ejemplo.com"
                 required
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="userPassword">Contraseña</Label>
               <div className="relative">
@@ -440,9 +521,9 @@ export function UserInfoStep({
                   id="userPassword"
                   type={showUserPassword ? 'text' : 'password'}
                   value={userPassword}
-                  onChange={(e) => setUserPassword(e.target.value)}
-                  onFocus={() => setIsUserPasswordFocused(true)}
-                  onBlur={() => setIsUserPasswordFocused(false)}
+                  onChange={handleUserPasswordChange}
+                  onFocus={handleUserPasswordFocus}
+                  onBlur={handleUserPasswordBlur}
                   placeholder="Tu contraseña"
                   required
                 />
@@ -451,11 +532,10 @@ export function UserInfoStep({
                   onClick={() => setShowUserPassword(!showUserPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
                 >
-                  {showUserPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showUserPassword ? eyeOffIcon : eyeIcon}
                 </button>
               </div>
             </div>
-
             <div className="text-center">
               <button
                 type="button"
@@ -465,38 +545,15 @@ export function UserInfoStep({
                 ¿Olvidaste tu contraseña?
               </button>
             </div>
-
-            <AnimatePresence>
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="text-sm text-red-500"
-                >
-                  {error}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                  Procesando...
-                </div>
-              ) : (
-                <span>{!isLogin ? 'Registrarse' : 'Iniciar Sesión'}</span>
-              )}
-            </Button>
+            {errorBlock}
+            {submitButton}
           </form>
         </TabsContent>
+        <SuccessModal
+          isOpen={showSuccessModal}
+          onClose={handleSuccessModalClose}
+        />
       </Tabs>
-
-      <SuccessModal
-        isOpen={showSuccessModal}
-        onClose={handleSuccessModalClose}
-      />
     </>
   );
-}
+});
