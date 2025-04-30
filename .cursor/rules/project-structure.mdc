@@ -5,6 +5,8 @@ alwaysApply: true
 ---
 # Estructura del Proyecto
 
+1===si
+
 El punto de entrada principal es `src/`. La configuración principal se encuentra en [next.config.ts](mdc:next.config.ts) y [tsconfig.json](mdc:tsconfig.json).
 
 Las dependencias están en [package.json](mdc:package.json).

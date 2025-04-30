@@ -1,4 +1,5 @@
-import { NextResponse } from 'next/server';
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { requireParam } from '@/lib/api/requireParam';
 
 interface DropletNetwork {
   ip_address: string;
@@ -19,24 +20,12 @@ interface Droplet {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const dropletName = searchParams.get('dropletName');
-
-    if (!dropletName) {
-      return NextResponse.json(
-        { error: 'Nombre del droplet es requerido' },
-        { status: 400 },
-      );
-    }
-
+    const dropletName = requireParam(
+      { dropletName: searchParams.get('dropletName') },
+      'dropletName',
+    );
     const DO_TOKEN = process.env.DO_TOKEN;
-    if (!DO_TOKEN) {
-      return NextResponse.json(
-        { error: 'DO_TOKEN no configurado' },
-        { status: 500 },
-      );
-    }
-
-    // Llamar a la API de Digital Ocean para listar los droplets
+    if (!DO_TOKEN) throw new Error('DO_TOKEN no configurado');
     const dropletsResponse = await fetch(
       'https://api.digitalocean.com/v2/droplets',
       {
@@ -47,47 +36,33 @@ export async function GET(request: Request) {
         },
       },
     );
-
     if (!dropletsResponse.ok) {
       const errorText = await dropletsResponse.text();
-      return NextResponse.json(
-        { error: 'Error consultando DigitalOcean', details: errorText },
-        { status: dropletsResponse.status },
+      return jsonError(
+        'Error consultando DigitalOcean',
+        dropletsResponse.status,
+        { details: errorText },
       );
     }
-
     const dropletsData = await dropletsResponse.json();
     const droplets: Droplet[] = dropletsData.droplets;
-
-    // Filtrar el droplet por nombre exacto
     const foundDroplet = droplets.find((d) => d.name === dropletName);
-
     if (!foundDroplet) {
-      return NextResponse.json({
-        success: false,
-        error: 'Droplet no encontrado',
-      });
+      return jsonError('Droplet no encontrado', 404, { success: false });
     }
-
-    // Buscar la red pública (v4) del droplet
     const publicNetwork = foundDroplet.networks.v4.find(
       (net: DropletNetwork) => net.type === 'public',
     );
-
     if (!publicNetwork) {
-      return NextResponse.json({
-        success: false,
-        error: 'IP pública no encontrada',
-      });
+      return jsonError('IP pública no encontrada', 404, { success: false });
     }
-
     const ip = publicNetwork.ip_address;
-    return NextResponse.json({ success: true, ip });
+    return jsonSuccess({ success: true, ip });
   } catch (error) {
-    console.error('Error al obtener la IP desde DO:', error);
-    return NextResponse.json(
-      { error: 'Error al obtener la IP', details: error },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al obtener la IP',
+      500,
+      { details: error },
     );
   }
 }

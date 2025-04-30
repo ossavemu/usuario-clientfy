@@ -1,7 +1,7 @@
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { DO_CONFIG } from '@/lib/config';
 import { createDroplet } from '@/lib/do/create';
 import { waitForDropletActive } from '@/lib/do/wait';
-import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
       console.log('✅ Droplet activo con IP:', ip);
       console.log('🔧 Iniciando configuración del servidor...');
 
-      return NextResponse.json({
+      return jsonSuccess({
         success: true,
         data: {
           ip,
@@ -58,9 +58,6 @@ export async function POST(request: Request) {
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Error desconocido';
-    return NextResponse.json(
-      { success: false, error: errorMessage },
-      { status: 500 },
-    );
+    return jsonError(errorMessage, 500, { success: false });
   }
 }

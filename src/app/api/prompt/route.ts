@@ -1,37 +1,28 @@
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { requireParam } from '@/lib/api/requireParam';
 import { getPrompt } from '@/lib/s3/prompt/get';
 import { savePrompt } from '@/lib/s3/prompt/save';
-import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const phoneNumber = searchParams.get('phoneNumber');
-    if (!phoneNumber) {
-      return NextResponse.json(
-        { error: 'Se requiere número de teléfono' },
-        { status: 400 },
-      );
-    }
+    const phoneNumber = requireParam(
+      { phoneNumber: searchParams.get('phoneNumber') },
+      'phoneNumber',
+    );
     try {
       const promptContent = await getPrompt(phoneNumber);
-      return NextResponse.json({
-        success: true,
-        prompt: promptContent,
-      });
+      return jsonSuccess({ success: true, prompt: promptContent });
     } catch (error) {
       if (error instanceof Error && error.name === 'NoSuchKey') {
-        return NextResponse.json(
-          { error: 'Prompt no encontrado' },
-          { status: 404 },
-        );
+        return jsonError('Prompt no encontrado', 404);
       }
       throw error;
     }
   } catch (error) {
-    console.error('Error en GET /api/prompt:', error);
-    return NextResponse.json(
-      { error: 'Error al obtener el prompt', details: error },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al obtener el prompt',
+      500,
     );
   }
 }
@@ -39,24 +30,19 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { phoneNumber, prompt } = await request.json();
-    if (!phoneNumber || !prompt) {
-      return NextResponse.json(
-        { error: 'Se requieren número de teléfono y prompt' },
-        { status: 400 },
-      );
-    }
+    if (!phoneNumber || !prompt)
+      throw new Error('Se requieren número de teléfono y prompt');
     const result = await savePrompt(phoneNumber, prompt);
-    return NextResponse.json({
+    return jsonSuccess({
       success: true,
       message: 'Prompt guardado exitosamente',
       url: result.url,
       prompt: prompt,
     });
   } catch (error) {
-    console.error('Error en POST /api/prompt:', error);
-    return NextResponse.json(
-      { error: 'Error al guardar el prompt', details: error },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al guardar el prompt',
+      500,
     );
   }
 }

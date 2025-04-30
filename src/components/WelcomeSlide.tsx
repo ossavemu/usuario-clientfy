@@ -86,7 +86,9 @@ export const WelcomeSlide = React.memo(function WelcomeSlide() {
   );
 
   const userPlusIcon = useMemo(
-    () => <UserPlus className="w-6 h-6 text-purple-500" />,
+    () => (
+      <UserPlus className="w-6 h-6 text-purple-500 stroke-2 stroke-white" />
+    ),
     [],
   );
 

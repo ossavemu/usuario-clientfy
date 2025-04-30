@@ -1,6 +1,7 @@
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { requireParam } from '@/lib/api/requireParam';
 import { getUserFiles } from '@/lib/s3/training/get';
 import { uploadFile } from '@/lib/s3/training/upload';
-import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
@@ -8,46 +9,31 @@ export async function POST(request: Request) {
     const files = formData.getAll('files') as File[];
     const names = formData.getAll('names') as string[];
     const phoneNumber = formData.get('phoneNumber') as string;
-
-    if (!files.length || !phoneNumber) {
-      return NextResponse.json(
-        { error: 'Se requieren archivos y número de teléfono' },
-        { status: 400 },
-      );
-    }
-
+    if (!files.length || !phoneNumber)
+      throw new Error('Se requieren archivos y número de teléfono');
     const uploadPromises = files.map(async (file, index) => {
       try {
         const buffer = Buffer.from(await file.arrayBuffer());
         const fileName = `${names[index] || file.name}.jpg`;
         const result = await uploadFile(buffer, fileName, phoneNumber, 'image');
         return { success: true, url: result.url };
-      } catch (error) {
-        console.error(`Error al subir imagen ${file.name}:`, error);
+      } catch {
         return { success: false, error: 'Error al subir la imagen' };
       }
     });
-
     const results = await Promise.all(uploadPromises);
     const allSuccessful = results.every((r) => r.success);
     const urls = results.filter((r) => r.success).map((r) => r.url);
-
     if (!allSuccessful) {
-      return NextResponse.json(
-        {
-          error: 'Algunas imágenes no pudieron ser subidas',
-          urls,
-        },
-        { status: 207 },
-      );
+      return jsonError('Algunas imágenes no pudieron ser subidas', 207, {
+        urls,
+      });
     }
-
-    return NextResponse.json({ success: true, urls });
+    return jsonSuccess({ success: true, urls });
   } catch (error) {
-    console.error('Error en POST /api/images:', error);
-    return NextResponse.json(
-      { error: 'Error al subir las imágenes', details: error },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al subir las imágenes',
+      500,
     );
   }
 }
@@ -55,22 +41,16 @@ export async function POST(request: Request) {
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const phoneNumber = searchParams.get('phoneNumber');
-
-    if (!phoneNumber) {
-      return NextResponse.json(
-        { error: 'Se requiere número de teléfono' },
-        { status: 400 },
-      );
-    }
-
+    const phoneNumber = requireParam(
+      { phoneNumber: searchParams.get('phoneNumber') },
+      'phoneNumber',
+    );
     const result = await getUserFiles(phoneNumber, 'image');
-    return NextResponse.json({ success: true, images: result.files });
+    return jsonSuccess({ success: true, images: result.files });
   } catch (error) {
-    console.error('Error en GET /api/images:', error);
-    return NextResponse.json(
-      { error: 'Error al obtener las imágenes', details: error },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al obtener las imágenes',
+      500,
     );
   }
 }

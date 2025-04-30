@@ -48,6 +48,7 @@ export const UserInfoStep = React.memo(function UserInfoStep({
   const eyeOffIcon = useMemo(() => <EyeOff size={20} />, []);
   const eyeIcon = useMemo(() => <Eye size={20} />, []);
   const [showStripeMsg, setShowStripeMsg] = useState(!isLogin);
+  const tabValue = useMemo(() => (isLogin ? 'login' : 'register'), [isLogin]);
 
   useEffect(() => {
     if (!isLogin) {
@@ -83,18 +84,9 @@ export const UserInfoStep = React.memo(function UserInfoStep({
     [isOpen, setIsOpen],
   );
 
-  // Actualizar el hash cuando cambia la pestaña
-  const handleTabChange = useCallback(
-    (value: string) => {
-      const newIsLogin = value === 'login';
-      setIsLogin(newIsLogin);
-      setError('');
-      setUserPassword('');
-      setServicePassword('');
-      router.push(`/auth${newIsLogin ? '?mode=login' : ''}`);
-    },
-    [router],
-  );
+  const handleTabChange = useCallback((value: string) => {
+    setIsLogin(value === 'login');
+  }, []);
 
   const handleNameChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -420,11 +412,7 @@ export const UserInfoStep = React.memo(function UserInfoStep({
           Es necesario realizar el pago en Stripe antes de registrarse
         </div>
       )}
-      <Tabs
-        value={isLogin ? 'login' : 'register'}
-        className="w-full"
-        onValueChange={handleTabChange}
-      >
+      <Tabs value={tabValue} className="w-full" onValueChange={handleTabChange}>
         <TabsList className="grid w-full grid-cols-[1fr_1fr_auto] mb-6">
           <TabsTrigger value="register">Registro</TabsTrigger>
           <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>

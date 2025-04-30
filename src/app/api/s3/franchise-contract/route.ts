@@ -1,27 +1,26 @@
+import { jsonSuccess } from '@/lib/api/jsonResponse';
+import { requireParam } from '@/lib/api/requireParam';
 import { deleteFranchiseContract } from '@/lib/s3/franchises/delete';
 import { getFranchiseContractUrl } from '@/lib/s3/franchises/url';
-import { NextResponse } from 'next/server';
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const email = searchParams.get('email');
-  if (!email) return NextResponse.json({ url: null });
+  const email = requireParam({ email: searchParams.get('email') }, 'email');
   try {
     const url = await getFranchiseContractUrl(email);
-    return NextResponse.json({ url });
+    return jsonSuccess({ url });
   } catch {
-    return NextResponse.json({ url: null });
+    return jsonSuccess({ url: null });
   }
 }
 
 export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
-  const email = searchParams.get('email');
-  if (!email) return NextResponse.json({ success: false });
+  const email = requireParam({ email: searchParams.get('email') }, 'email');
   try {
     await deleteFranchiseContract(email);
-    return NextResponse.json({ success: true });
+    return jsonSuccess({ success: true });
   } catch {
-    return NextResponse.json({ success: false });
+    return jsonSuccess({ success: false });
   }
 }

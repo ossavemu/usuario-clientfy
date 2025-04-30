@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Eye, EyeOff } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 export function ResetPasswordForm() {
@@ -12,6 +12,24 @@ export function ResetPasswordForm() {
   const [servicePassword, setServicePassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleEmailChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setEmail(e.target.value);
+    },
+    [],
+  );
+
+  const handlePasswordChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setServicePassword(e.target.value);
+    },
+    [],
+  );
+
+  const togglePasswordVisibility = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +74,7 @@ export function ResetPasswordForm() {
           id="email"
           type="email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={handleEmailChange}
           placeholder="correo@ejemplo.com"
           required
         />
@@ -69,13 +87,13 @@ export function ResetPasswordForm() {
             id="servicePassword"
             type={showPassword ? 'text' : 'password'}
             value={servicePassword}
-            onChange={(e) => setServicePassword(e.target.value)}
+            onChange={handlePasswordChange}
             placeholder="Contraseña proporcionada por el servicio"
             required
           />
           <button
             type="button"
-            onClick={() => setShowPassword(!showPassword)}
+            onClick={togglePasswordVisibility}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
           >
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -87,13 +105,17 @@ export function ResetPasswordForm() {
       </div>
 
       <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading ? (
-          <div className="flex items-center justify-center">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-            Procesando...
-          </div>
-        ) : (
-          'Restablecer Contraseña'
+        {useMemo(
+          () =>
+            isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                Procesando...
+              </div>
+            ) : (
+              'Restablecer Contraseña'
+            ),
+          [isLoading],
         )}
       </Button>
     </form>

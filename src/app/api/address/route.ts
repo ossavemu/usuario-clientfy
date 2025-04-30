@@ -1,30 +1,25 @@
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { requireParam } from '@/lib/api/requireParam';
 import {
   deleteUserAddress,
   getUserAddress,
   saveUserAddress,
 } from '@/lib/turso/operations';
 import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
 
 // GET - Obtener dirección
 export async function GET(request: NextRequest) {
   try {
-    const email = request.nextUrl.searchParams.get('email');
-
-    if (!email) {
-      return NextResponse.json(
-        { success: false, error: 'Email no proporcionado' },
-        { status: 400 },
-      );
-    }
-
+    const email = requireParam(
+      { email: request.nextUrl.searchParams.get('email') },
+      'email',
+    );
     const address = await getUserAddress(email);
-    return NextResponse.json({ success: true, address });
+    return jsonSuccess({ success: true, address });
   } catch (error) {
-    console.error('Error al obtener la dirección:', error);
-    return NextResponse.json(
-      { success: false, error: 'Error al obtener la dirección' },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al obtener la dirección',
+      500,
     );
   }
 }
@@ -33,21 +28,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { email, address } = await request.json();
-
-    if (!email || !address) {
-      return NextResponse.json(
-        { success: false, error: 'Email y dirección son requeridos' },
-        { status: 400 },
-      );
-    }
-
+    if (!email || !address) throw new Error('Email y dirección son requeridos');
     await saveUserAddress(email, address);
-    return NextResponse.json({ success: true });
+    return jsonSuccess({ success: true });
   } catch (error) {
-    console.error('Error al guardar la dirección:', error);
-    return NextResponse.json(
-      { success: false, error: 'Error al guardar la dirección' },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al guardar la dirección',
+      500,
     );
   }
 }
@@ -55,22 +42,16 @@ export async function POST(request: NextRequest) {
 // DELETE - Eliminar dirección
 export async function DELETE(request: NextRequest) {
   try {
-    const email = request.nextUrl.searchParams.get('email');
-
-    if (!email) {
-      return NextResponse.json(
-        { success: false, error: 'Email no proporcionado' },
-        { status: 400 },
-      );
-    }
-
+    const email = requireParam(
+      { email: request.nextUrl.searchParams.get('email') },
+      'email',
+    );
     await deleteUserAddress(email);
-    return NextResponse.json({ success: true });
+    return jsonSuccess({ success: true });
   } catch (error) {
-    console.error('Error al eliminar la dirección:', error);
-    return NextResponse.json(
-      { success: false, error: 'Error al eliminar la dirección' },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al eliminar la dirección',
+      500,
     );
   }
 }
@@ -79,21 +60,15 @@ export async function DELETE(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const { email, address } = await request.json();
-
-    if (!email || !address) {
-      return NextResponse.json(
-        { success: false, error: 'Email y dirección son requeridos' },
-        { status: 400 },
-      );
-    }
-
+    if (!email || !address) throw new Error('Email y dirección son requeridos');
     await saveUserAddress(email, address);
-    return NextResponse.json({ success: true });
+    return jsonSuccess({ success: true });
   } catch (error) {
-    console.error('Error al actualizar la dirección:', error);
-    return NextResponse.json(
-      { success: false, error: 'Error al actualizar la dirección' },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error
+        ? error.message
+        : 'Error al actualizar la dirección',
+      500,
     );
   }
 }

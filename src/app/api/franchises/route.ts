@@ -2,12 +2,13 @@ import { transporter } from '@/lib/email/setup';
 import { deleteFranchiseContract } from '@/lib/s3/franchises/delete';
 import { uploadFranchiseContract } from '@/lib/s3/franchises/upload';
 
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { requireParam } from '@/lib/api/requireParam';
 import { executeQuery } from '@/lib/turso/client';
 import type { ResultSet } from '@libsql/client';
 import fontkit from '@pdf-lib/fontkit';
 import { Buffer } from 'buffer';
 import fs from 'fs';
-import { NextResponse } from 'next/server';
 import path from 'path';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
@@ -16,16 +17,9 @@ export async function GET() {
     const result = await executeQuery<ResultSet>(
       'SELECT * FROM franchises ORDER BY created_at DESC',
     );
-    return NextResponse.json({ success: true, franquicias: result.rows });
+    return jsonSuccess({ success: true, franquicias: result.rows });
   } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        franquicias: [],
-        message: 'Error fetching franchises',
-      },
-      { status: 500 },
-    );
+    return jsonError('Error fetching franchises', 500, { franquicias: [] });
   }
 }
 
@@ -41,30 +35,21 @@ export async function POST(request: Request) {
       signatureData,
     } = await request.json();
     if (!name || !personOrCompanyName || !stateId || !email) {
-      return NextResponse.json(
-        { success: false, message: 'Incomplete data' },
-        { status: 400 },
-      );
+      return jsonError('Incomplete data', 400);
     }
     const existsId = await executeQuery<ResultSet>(
       'SELECT id FROM franchises WHERE state_id = ?',
       [stateId],
     );
     if (existsId.rows.length > 0) {
-      return NextResponse.json(
-        { success: false, message: 'ID already exists' },
-        { status: 400 },
-      );
+      return jsonError('ID already exists', 400);
     }
     const existsEmail = await executeQuery<ResultSet>(
       'SELECT id FROM franchises WHERE email = ?',
       [email],
     );
     if (existsEmail.rows.length > 0) {
-      return NextResponse.json(
-        { success: false, message: 'Email already exists' },
-        { status: 400 },
-      );
+      return jsonError('Email already exists', 400);
     }
     await executeQuery(
       'INSERT INTO franchises (name, person_or_company_name, state_id, email, contracted_instances) VALUES (?, ?, ?, ?, ?)',
@@ -151,36 +136,29 @@ export async function POST(request: Request) {
       email,
     );
     const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
-    return NextResponse.json({
+    return jsonSuccess({
       success: true,
       pdfBase64,
       contractUrl: uploadResult.url,
     });
-  } catch (error) {
-    console.error(error);
-    return NextResponse.json(
-      { success: false, message: 'Error creating franchise' },
-      { status: 500 },
-    );
+  } catch {
+    return jsonError('Error creating franchise', 500);
   }
 }
 
 export async function DELETE(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const email = searchParams.get('email');
-  if (!email)
-    return NextResponse.json(
-      { success: false, message: 'Email requerido' },
-      { status: 400 },
-    );
+  let email;
+  try {
+    const { searchParams } = new URL(request.url);
+    email = requireParam({ email: searchParams.get('email') }, 'email');
+  } catch {
+    return jsonError('Falta el parámetro requerido: email', 400);
+  }
   try {
     await deleteFranchiseContract(email);
     await executeQuery('DELETE FROM franchises WHERE email = ?', [email]);
-    return NextResponse.json({ success: true });
+    return jsonSuccess({ success: true });
   } catch {
-    return NextResponse.json(
-      { success: false, message: 'Error al eliminar franquicia' },
-      { status: 500 },
-    );
+    return jsonError('Error al eliminar franquicia', 500);
   }
 }

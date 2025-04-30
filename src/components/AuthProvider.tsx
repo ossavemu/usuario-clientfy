@@ -124,7 +124,7 @@ export const AuthProvider = React.memo(function AuthProvider({
     };
   }, [checkAuth, isAuthenticated, router]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
@@ -144,11 +144,43 @@ export const AuthProvider = React.memo(function AuthProvider({
     localStorage.removeItem('user');
     setIsAuthenticated(false);
     router.push('/');
-  };
+  }, [router]);
 
-  const handleGoHome = () => {
+  const handleGoHome = useCallback(() => {
     window.location.href = '/dashboard';
-  };
+  }, []);
+
+  const authButtons = useMemo(
+    () => (
+      <div className="absolute top-0 right-0 p-4 z-50 flex gap-2">
+        <Button
+          variant="ghost"
+          onClick={handleGoHome}
+          disabled={isCreatingBot}
+          className={`text-white hover:text-white/80 hover:bg-purple-700/20 ${
+            isCreatingBot ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          size="sm"
+        >
+          <Home className="h-4 w-4 mr-2" />
+          Inicio
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          disabled={isCreatingBot}
+          className={`text-white hover:text-white/80 hover:bg-purple-700/20 ${
+            isCreatingBot ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+          size="sm"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Cerrar Sesión
+        </Button>
+      </div>
+    ),
+    [isCreatingBot, handleGoHome, handleLogout],
+  );
 
   if (isLoading) {
     return null;
@@ -156,34 +188,7 @@ export const AuthProvider = React.memo(function AuthProvider({
 
   return (
     <BotCreationContext.Provider value={botCreationContextValue}>
-      {isAuthenticated && (
-        <div className="absolute top-0 right-0 p-4 z-50 flex gap-2">
-          <Button
-            variant="ghost"
-            onClick={handleGoHome}
-            disabled={isCreatingBot}
-            className={`text-white hover:text-white/80 hover:bg-purple-700/20 ${
-              isCreatingBot ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            size="sm"
-          >
-            <Home className="h-4 w-4 mr-2" />
-            Inicio
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={handleLogout}
-            disabled={isCreatingBot}
-            className={`text-white hover:text-white/80 hover:bg-purple-700/20 ${
-              isCreatingBot ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-            size="sm"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Cerrar Sesión
-          </Button>
-        </div>
-      )}
+      {isAuthenticated && authButtons}
       {children}
     </BotCreationContext.Provider>
   );

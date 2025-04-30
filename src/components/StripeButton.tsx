@@ -27,13 +27,16 @@ const StripeButton = React.memo(function StripeButton({
     try {
       const response = await fetch('/api/buy');
       if (!response.ok) {
-        throw new Error('Error en la respuesta del servidor');
+        const errorData = await response.json();
+        throw new Error(
+          errorData.error || 'Error en la respuesta del servidor',
+        );
       }
       const data = await response.json();
-      if (!data?.url) {
-        throw new Error('URL de pago no encontrada');
+      if (!data?.link) {
+        throw new Error('Enlace de pago no encontrado');
       }
-      window.location.href = data.url;
+      window.location.href = data.link;
     } catch (error) {
       console.error('Error al procesar el pago:', error);
       toast.error('Error al procesar el pago');

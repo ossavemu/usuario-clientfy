@@ -1,7 +1,8 @@
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { requireParam } from '@/lib/api/requireParam';
 import { DO_CONFIG } from '@/lib/config';
 import { getInstanceByPhone } from '@/lib/turso/instance';
 import type { NextRequest } from 'next/server';
-import { NextResponse } from 'next/server';
 
 function sanitizePhone(phone: string): string {
   return phone.toLowerCase().replace(/[^0-9]/g, '');
@@ -120,38 +121,17 @@ async function checkDropletStatus(dropletName: string): Promise<{
   }
 }
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(request: NextRequest) {
   try {
-    const phoneParam = request.nextUrl.searchParams.get('phone');
-
-    if (!phoneParam) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'Número de teléfono requerido',
-          data: {
-            status: 'error',
-            progress: 0,
-          },
-        },
-        { status: 400 },
-      );
-    }
-
+    const phoneParam = requireParam(
+      { phone: request.nextUrl.searchParams.get('phone') },
+      'phone',
+    );
     const cleanPhone = sanitizePhone(phoneParam);
     const dropletName = `bot-${cleanPhone}`;
-
-    console.log('\n📡 Monitoreando estado de la instancia...');
-    console.log('📱 Número:', phoneParam);
-    console.log('🤖 Hostname:', dropletName);
-
-    // Verificar si ya existe una instancia registrada en Turso
     const instanceData = await getInstanceByPhone(cleanPhone);
-
     if (instanceData) {
-      console.log('📦 Instancia encontrada en Turso:', instanceData);
-
-      return NextResponse.json({
+      return jsonSuccess({
         success: true,
         data: {
           status: 'completed',
@@ -160,40 +140,20 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         },
       });
     }
-
-    // Si no existe en Turso, verificar el estado del droplet en DigitalOcean
-    console.log('🔍 Buscando instancia en DigitalOcean...');
     const dropletStatus = await checkDropletStatus(dropletName);
-    console.log('📦 Estado del droplet:', dropletStatus);
-
     const status = dropletStatus.status;
     const progress = getProgressByStatus(status);
-
     if (status === 'error' || status === 'failed') {
       const errorMessage = dropletStatus.error || 'Error desconocido';
-      console.error('\n❌ Error:', errorMessage);
-
-      return NextResponse.json({
+      return jsonError(errorMessage, 500, {
         success: false,
-        error: errorMessage,
         data: {
           status: 'error',
           progress: 0,
         },
       });
     }
-
-    console.log(`\n⏱️ Estado: ${status} (${progress}%)`);
-
-    if (dropletStatus.instanceInfo?.ip) {
-      console.log(`🌐 IP: ${dropletStatus.instanceInfo.ip}`);
-    }
-
-    if (status === 'completed') {
-      console.log('\n✅ ¡Instancia creada exitosamente!');
-    }
-
-    return NextResponse.json({
+    return jsonSuccess({
       success: true,
       data: {
         status,
@@ -202,12 +162,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       },
     });
   } catch (error) {
-    console.error('❌ Error crítico:', error);
     const errorMessage =
       error instanceof Error ? error.message : 'Error desconocido';
-    return NextResponse.json({
+    return jsonError(errorMessage, 500, {
       success: false,
-      error: errorMessage,
       data: {
         status: 'error',
         progress: 0,

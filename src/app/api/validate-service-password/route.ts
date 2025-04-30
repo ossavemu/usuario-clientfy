@@ -1,42 +1,30 @@
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { validateServicePassword } from '@/lib/turso/servicePassword';
-import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { success: false, message: 'Email y contraseña son requeridos' },
-        { status: 400 },
-      );
-    }
-
-    // Validar contraseña de servicio con Turso
+    if (!email || !password)
+      throw new Error('Email y contraseña son requeridos');
     const isValid = await validateServicePassword(email, password);
-
     if (!isValid) {
-      return NextResponse.json({
+      return jsonSuccess({
         success: true,
         isValid: false,
         message: 'La contraseña del servicio es incorrecta',
       });
     }
-
-    // Contraseña válida
-    return NextResponse.json({
+    return jsonSuccess({
       success: true,
       isValid: true,
       message: 'Contraseña de servicio válida',
     });
-  } catch {
-    return NextResponse.json(
-      {
-        success: false,
-        isValid: false,
-        message: 'Error al validar contraseña de servicio',
-      },
-      { status: 500 },
+  } catch (error) {
+    return jsonError(
+      error instanceof Error
+        ? error.message
+        : 'Error al validar contraseña de servicio',
+      500,
     );
   }
 }

@@ -1,5 +1,5 @@
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { deleteInstance } from '@/lib/turso/instance';
-import { NextResponse } from 'next/server';
 
 interface Droplet {
   id: number;
@@ -67,10 +67,7 @@ export async function DELETE(request: Request) {
     const { email, numberphone } = await request.json();
 
     if (!email && !numberphone) {
-      return NextResponse.json(
-        { error: 'Se requiere email o número de teléfono' },
-        { status: 400 },
-      );
+      throw new Error('Se requiere email o número de teléfono');
     }
 
     // Si tenemos el número, intentamos borrar el droplet
@@ -85,15 +82,14 @@ export async function DELETE(request: Request) {
       console.log('✅ Registro eliminado de Turso para:', email);
     }
 
-    return NextResponse.json({
+    return jsonSuccess({
       success: true,
       message: 'Instancia eliminada correctamente',
     });
   } catch (error) {
-    console.error('❌ Error al eliminar la instancia:', error);
-    return NextResponse.json(
-      { error: 'Error al eliminar la instancia' },
-      { status: 500 },
+    return jsonError(
+      error instanceof Error ? error.message : 'Error al eliminar la instancia',
+      500,
     );
   }
 }
