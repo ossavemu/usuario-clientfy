@@ -1,6 +1,6 @@
+import { createServicePassword } from '@/dal/admin';
+import { getUser } from '@/dal/unlogged';
 import { sendServicePasswordEmail } from '@/lib/email/password';
-import { executeQuery } from '@/lib/turso/client';
-import { createServicePassword } from '@/lib/turso/servicePassword';
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -69,16 +69,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       console.log(`📧 Email del cliente: ${email}`);
 
       // Verificar si el usuario ya existe en la base de datos
-      const userExists = await executeQuery(
-        'SELECT email FROM users WHERE email = ?',
-        [email],
-      );
+      const userExists = await getUser(email);
 
-      if (userExists.rows.length === 0) {
+      if (!userExists) {
         // El usuario aún no se ha registrado, generamos una contraseña de servicio
         try {
           // Generar contraseña de servicio directamente con Turso
-          const password = await createServicePassword(email);
+          const password = await createServicePassword(email, {
+            get: () => ({ value: process.env.ADMIN_SESSION_TOKEN || '' }),
+          });
 
           // Enviar la contraseña por correo electrónico
           await sendServicePasswordEmail(email, password);

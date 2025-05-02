@@ -1,7 +1,4 @@
-import { deleteUserPhone } from '@/lib/user/deletePhone';
-import { getUserPhone } from '@/lib/user/getPhone';
-import { saveUserPhone } from '@/lib/user/savePhone';
-import { updateUserPhone } from '@/lib/user/updatePhone';
+import { deleteUserPhone, getUserPhone, saveUserPhone } from '@/dal/unlogged';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -16,7 +13,15 @@ export async function POST(request: Request) {
       );
     }
 
-    await saveUserPhone(email, phoneData);
+    await saveUserPhone(
+      email,
+      `${phoneData.countryCode.replace('+', '')}${phoneData.phone.replace(
+        /\D/g,
+        '',
+      )}`,
+      phoneData.countryCode,
+      phoneData.serviceType,
+    );
     return NextResponse.json({ success: true, phone: phoneData });
   } catch (error) {
     console.error('Error en POST /api/phone:', error);
@@ -30,7 +35,15 @@ export async function POST(request: Request) {
 export async function PUT(request: Request) {
   try {
     const { email, phoneData } = await request.json();
-    await updateUserPhone(email, phoneData);
+    await saveUserPhone(
+      email,
+      `${phoneData.countryCode.replace('+', '')}${phoneData.phone.replace(
+        /\D/g,
+        '',
+      )}`,
+      phoneData.countryCode,
+      phoneData.serviceType,
+    );
     return NextResponse.json({ success: true, phone: phoneData });
   } catch (error) {
     console.error('Error en PUT /api/phone:', error);

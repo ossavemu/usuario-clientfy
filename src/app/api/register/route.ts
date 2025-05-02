@@ -1,9 +1,8 @@
 'use server';
 
+import { saveSession } from '@/dal/logged';
+import { saveUser, validateServicePassword } from '@/dal/unlogged';
 import { ENCRYPT_ALGORITHM, SALT_ROUNDS } from '@/lib/constants/encrypt';
-import { saveUser } from '@/lib/turso/operations';
-import { validateServicePassword } from '@/lib/turso/servicePassword';
-import { saveSession } from '@/lib/turso/session';
 import { type RegistrationData } from '@/types/registration';
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';

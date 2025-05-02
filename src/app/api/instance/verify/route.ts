@@ -1,5 +1,5 @@
-import { deleteInstance, getInstanceIp } from '@/lib/turso/instance';
-import { NextResponse } from 'next/server';
+import { deleteInstance, getInstanceIp } from '@/dal/logged';
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 
 const timeout = (ms: number) =>
   new Promise((_, reject) => {
@@ -26,13 +26,13 @@ export async function GET(request: Request) {
     const email = searchParams.get('email');
 
     if (!email) {
-      return NextResponse.json({ error: 'Email requerido' }, { status: 400 });
+      return jsonError('Email requerido', 400);
     }
 
     const ip = await getInstanceIp(email);
 
     if (!ip) {
-      return NextResponse.json({ exists: false });
+      return jsonError('IP no encontrada', 404);
     }
 
     // Verificar si el panel está activo
@@ -41,7 +41,7 @@ export async function GET(request: Request) {
     if (!isActive) {
       // Si el panel no está activo, eliminamos la instancia de Turso
       await deleteInstance(email);
-      return NextResponse.json({ exists: false });
+      return jsonError('IP no encontrada', 404);
     }
 
     // Verificar si hay QR activo solo si el panel está activo
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
       const qrResponse = await fetch(`http://${ip}:3008`);
       const hasQr = qrResponse.status === 200;
 
-      return NextResponse.json({
+      return jsonSuccess({
         exists: true,
         ip,
         isActive: true,
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
       });
     } catch (error) {
       console.error('Error al verificar QR:', error);
-      return NextResponse.json({
+      return jsonSuccess({
         exists: true,
         ip,
         isActive: true,
@@ -66,9 +66,30 @@ export async function GET(request: Request) {
     }
   } catch (error) {
     console.error('Error al verificar instancia:', error);
-    return NextResponse.json(
-      { error: 'Error al verificar instancia' },
-      { status: 500 },
-    );
+    return jsonError('Error al verificar instancia', 500);
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const { email } = await request.json();
+    if (!email) return jsonError('Email requerido', 400);
+    const ip = await getInstanceIp(email);
+    return jsonSuccess({ ip });
+  } catch (error) {
+    console.error('Error al obtener IP:', error);
+    return jsonError('Error al obtener IP', 500);
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { email } = await request.json();
+    if (!email) return jsonError('Email requerido', 400);
+    await deleteInstance(email);
+    return jsonSuccess({ success: true });
+  } catch (error) {
+    console.error('Error al eliminar instancia:', error);
+    return jsonError('Error al eliminar instancia', 500);
   }
 }

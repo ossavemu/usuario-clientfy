@@ -1,33 +1,25 @@
+import {
+  deletePasswordResetToken,
+  getUser,
+  saveUser,
+  verifyPasswordResetToken,
+} from '@/dal/unlogged';
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { ENCRYPT_ALGORITHM, SALT_ROUNDS } from '@/lib/constants/encrypt';
-import { executeQuery } from '@/lib/turso/client';
-import { getUser, saveUser } from '@/lib/turso/operations';
-import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
     const { token, newPassword } = await request.json();
 
     if (!token || !newPassword) {
-      return NextResponse.json(
-        { success: false, message: 'Token y nueva contraseña son requeridos' },
-        { status: 400 },
-      );
+      return jsonError('Token y nueva contraseña son requeridos', 400);
     }
 
-    // Verificar el token en Turso
-    const result = await executeQuery(
-      'SELECT * FROM password_resets WHERE token = ? AND expires_at > CURRENT_TIMESTAMP',
-      [token],
-    );
-
-    if (!result.rows || result.rows.length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'Token inválido o expirado' },
-        { status: 400 },
-      );
+    // Verificar el token usando el DAL
+    const email = await verifyPasswordResetToken(token);
+    if (!email) {
+      return jsonError('Token inválido o expirado', 400);
     }
-
-    const email = result.rows[0].email as string;
 
     // Encriptar la nueva contraseña
     const hashedPassword = await Bun.password.hash(newPassword, {
@@ -35,13 +27,10 @@ export async function POST(request: Request) {
       cost: SALT_ROUNDS,
     });
 
-    // Obtener usuario de Turso
+    // Obtener usuario
     const user = await getUser(email);
     if (!user) {
-      return NextResponse.json(
-        { success: false, message: 'Usuario no encontrado' },
-        { status: 404 },
-      );
+      return jsonError('Usuario no encontrado', 404);
     }
 
     // Actualizar contraseña
@@ -50,21 +39,17 @@ export async function POST(request: Request) {
       password: hashedPassword,
     };
 
-    // Guardar usuario actualizado
     await saveUser(updatedUser);
 
     // Eliminar el token de reset
-    await executeQuery('DELETE FROM password_resets WHERE token = ?', [token]);
+    await deletePasswordResetToken(token);
 
-    return NextResponse.json({
+    return jsonSuccess({
       success: true,
       message: 'Contraseña actualizada exitosamente',
     });
   } catch (error) {
     console.error('Error actualizando contraseña:', error);
-    return NextResponse.json(
-      { success: false, message: 'Error al actualizar la contraseña' },
-      { status: 500 },
-    );
+    return jsonError('Error al actualizar la contraseña', 500);
   }
 }

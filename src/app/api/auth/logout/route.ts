@@ -1,4 +1,4 @@
-import { deleteSession } from '@/lib/turso/session';
+import { deleteSession } from '@/dal/logged';
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 

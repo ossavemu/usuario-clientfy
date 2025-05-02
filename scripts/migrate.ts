@@ -1,6 +1,6 @@
+import { client } from '@/db';
 import fs from 'fs';
 import path from 'path';
-import { db } from '../src/lib/turso/client';
 
 // Leer el archivo de migración
 async function main() {
@@ -51,7 +51,7 @@ async function main() {
           )}...`,
         );
         try {
-          await db.execute(stmt);
+          await client.execute(stmt);
           console.log(`✓ Sentencia ${i + 1} ejecutada correctamente`);
         } catch (error) {
           console.error(`✗ Error en sentencia ${i + 1}:`, error);

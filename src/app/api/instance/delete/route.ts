@@ -1,95 +1,17 @@
+import { deleteInstance } from '@/dal/logged';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
-import { deleteInstance } from '@/lib/turso/instance';
-
-interface Droplet {
-  id: number;
-  name: string;
-}
-
-async function deleteDroplet(dropletName: string): Promise<boolean> {
-  try {
-    const DO_TOKEN = process.env.DO_TOKEN;
-    if (!DO_TOKEN) {
-      throw new Error('DO_TOKEN no configurado');
-    }
-
-    // 1. Obtener lista de droplets
-    const dropletsResponse = await fetch(
-      'https://api.digitalocean.com/v2/droplets',
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${DO_TOKEN}`,
-        },
-      },
-    );
-
-    if (!dropletsResponse.ok) {
-      throw new Error('Error al obtener droplets');
-    }
-
-    const dropletsData = await dropletsResponse.json();
-    const droplet = dropletsData.droplets.find(
-      (d: Droplet) => d.name === dropletName,
-    );
-
-    if (!droplet) {
-      console.log('No se encontró el droplet:', dropletName);
-      return true; // Consideramos éxito si no existe
-    }
-
-    // 2. Borrar el droplet
-    const deleteResponse = await fetch(
-      `https://api.digitalocean.com/v2/droplets/${droplet.id}`,
-      {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${DO_TOKEN}`,
-        },
-      },
-    );
-
-    if (!deleteResponse.ok) {
-      throw new Error('Error al eliminar droplet');
-    }
-
-    console.log('✅ Droplet eliminado correctamente:', dropletName);
-    return true;
-  } catch (error) {
-    console.error('❌ Error al eliminar droplet:', error);
-    return false;
-  }
-}
+import { deleteDroplet } from '@/lib/do/delete';
 
 export async function DELETE(request: Request) {
   try {
-    const { email, numberphone } = await request.json();
-
-    if (!email && !numberphone) {
-      throw new Error('Se requiere email o número de teléfono');
-    }
-
-    // Si tenemos el número, intentamos borrar el droplet
-    if (numberphone) {
-      const dropletName = `bot-${numberphone.replace('+', '')}`;
-      await deleteDroplet(dropletName);
-    }
-
-    // Si tenemos el email, borramos de Turso
-    if (email) {
-      await deleteInstance(email);
-      console.log('✅ Registro eliminado de Turso para:', email);
-    }
-
-    return jsonSuccess({
-      success: true,
-      message: 'Instancia eliminada correctamente',
-    });
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email');
+    if (!email) return jsonError('Email requerido', 400);
+    await deleteDroplet(email);
+    await deleteInstance(email);
+    return jsonSuccess({ success: true });
   } catch (error) {
-    return jsonError(
-      error instanceof Error ? error.message : 'Error al eliminar la instancia',
-      500,
-    );
+    console.error('Error al eliminar instancia:', error);
+    return jsonError('Error al eliminar instancia', 500);
   }
 }

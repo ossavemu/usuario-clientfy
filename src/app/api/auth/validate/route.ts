@@ -1,5 +1,5 @@
-import { getUser } from '@/lib/turso/operations';
-import { validateSession } from '@/lib/turso/session';
+import { validateSession } from '@/dal/logged';
+import { getUser } from '@/dal/unlogged';
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 

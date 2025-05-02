@@ -1,11 +1,16 @@
+import {
+  createFranchise,
+  deleteFranchiseByEmail,
+  findFranchiseByEmail,
+  findFranchiseById,
+  getAllFranchises,
+} from '@/dal/admin';
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { requireParam } from '@/lib/api/requireParam';
+import { getCookieStore } from '@/lib/cookie';
 import { transporter } from '@/lib/email/setup';
 import { deleteFranchiseContract } from '@/lib/s3/franchises/delete';
 import { uploadFranchiseContract } from '@/lib/s3/franchises/upload';
-
-import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
-import { requireParam } from '@/lib/api/requireParam';
-import { executeQuery } from '@/lib/turso/client';
-import type { ResultSet } from '@libsql/client';
 import fontkit from '@pdf-lib/fontkit';
 import { Buffer } from 'buffer';
 import fs from 'fs';
@@ -13,17 +18,13 @@ import path from 'path';
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 
 export async function GET() {
-  try {
-    const result = await executeQuery<ResultSet>(
-      'SELECT * FROM franchises ORDER BY created_at DESC',
-    );
-    return jsonSuccess({ success: true, franquicias: result.rows });
-  } catch {
-    return jsonError('Error fetching franchises', 500, { franquicias: [] });
-  }
+  const cookieStore = await getCookieStore();
+  const franquicias = await getAllFranchises(cookieStore);
+  return jsonSuccess({ success: true, franquicias });
 }
 
 export async function POST(request: Request) {
+  const cookieStore = await getCookieStore();
   try {
     const {
       name,
@@ -37,24 +38,22 @@ export async function POST(request: Request) {
     if (!name || !personOrCompanyName || !stateId || !email) {
       return jsonError('Incomplete data', 400);
     }
-    const existsId = await executeQuery<ResultSet>(
-      'SELECT id FROM franchises WHERE state_id = ?',
-      [stateId],
-    );
-    if (existsId.rows.length > 0) {
+    const existsId = await findFranchiseById(stateId, cookieStore);
+    if (existsId.length > 0) {
       return jsonError('ID already exists', 400);
     }
-    const existsEmail = await executeQuery<ResultSet>(
-      'SELECT id FROM franchises WHERE email = ?',
-      [email],
-    );
-    if (existsEmail.rows.length > 0) {
+    const existsEmail = await findFranchiseByEmail(email, cookieStore);
+    if (existsEmail.length > 0) {
       return jsonError('Email already exists', 400);
     }
-    await executeQuery(
-      'INSERT INTO franchises (name, person_or_company_name, state_id, email, contracted_instances) VALUES (?, ?, ?, ?, ?)',
-      [name, personOrCompanyName, stateId, email, contractedInstances],
-    );
+    await createFranchise({
+      name,
+      personOrCompanyName,
+      stateId,
+      email,
+      contractedInstances,
+      cookieStore,
+    });
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
     const page = pdfDoc.addPage();
@@ -147,6 +146,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const cookieStore = await getCookieStore();
   let email;
   try {
     const { searchParams } = new URL(request.url);
@@ -156,7 +156,7 @@ export async function DELETE(request: Request) {
   }
   try {
     await deleteFranchiseContract(email);
-    await executeQuery('DELETE FROM franchises WHERE email = ?', [email]);
+    await deleteFranchiseByEmail(email, cookieStore);
     return jsonSuccess({ success: true });
   } catch {
     return jsonError('Error al eliminar franquicia', 500);

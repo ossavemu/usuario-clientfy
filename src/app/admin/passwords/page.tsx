@@ -45,7 +45,16 @@ export default function PasswordsAdmin() {
       }
 
       const data = await response.json();
-      setPasswords(data.passwords);
+      setPasswords(
+        data.passwords.map(
+          (pw: { email: string; password: string; created_at: string }) => ({
+            id: pw.email,
+            serviceName: pw.email,
+            password: pw.password,
+            createdAt: pw.created_at,
+          }),
+        ),
+      );
     } catch {
       toast.error('Error al cargar contraseñas');
     } finally {

@@ -1,23 +1,16 @@
+import { validateServicePassword } from '@/dal/unlogged';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
-import { validateServicePassword } from '@/lib/turso/servicePassword';
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json();
     if (!email || !password)
-      throw new Error('Email y contraseña son requeridos');
+      return jsonError('Email y contraseña requeridos', 400);
+
     const isValid = await validateServicePassword(email, password);
-    return jsonSuccess({
-      success: true,
-      isValid,
-      message: isValid
-        ? 'Contraseña de servicio válida'
-        : 'Contraseña de servicio inválida',
-    });
+    return jsonSuccess({ isValid });
   } catch (error) {
-    return jsonError(
-      error instanceof Error ? error.message : 'Error al validar contraseña',
-      500,
-    );
+    console.error('Error al validar contraseña:', error);
+    return jsonError('Error al validar contraseña', 500);
   }
 }

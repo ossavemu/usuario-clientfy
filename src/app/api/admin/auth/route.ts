@@ -1,33 +1,18 @@
-import { NextResponse } from 'next/server';
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 
 export async function POST(request: Request) {
-  try {
-    const { password } = await request.json();
-    const correctPassword = process.env.ADMIN_PASSWORD;
-
-    if (!correctPassword) {
-      return NextResponse.json(
-        { message: 'Error de configuración del servidor' },
-        { status: 500 },
-      );
-    }
-
-    if (password !== correctPassword) {
-      return NextResponse.json(
-        { message: 'Contraseña incorrecta' },
-        { status: 401 },
-      );
-    }
-
-    return NextResponse.json(
-      { message: 'Autenticación exitosa' },
-      { status: 200 },
-    );
-  } catch (error) {
-    console.error('Error en la autenticación:', error);
-    return NextResponse.json(
-      { message: 'Error en el servidor' },
-      { status: 500 },
-    );
+  const { password } = await request.json();
+  if (password !== process.env.ADMIN_PASSWORD) {
+    return jsonError('Contraseña incorrecta', 401);
   }
+  const token = process.env.ADMIN_SESSION_TOKEN!;
+  const response = jsonSuccess({ success: true });
+  response.cookies.set('adminAuth', token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 8,
+  });
+  return response;
 }

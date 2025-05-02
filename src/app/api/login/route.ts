@@ -1,10 +1,10 @@
 'use server';
 
+import { saveSession } from '@/dal/logged';
+import { getUser } from '@/dal/unlogged';
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { ENCRYPT_ALGORITHM } from '@/lib/constants/encrypt';
-import { getUser } from '@/lib/turso/operations';
-import { saveSession } from '@/lib/turso/session';
 import jwt from 'jsonwebtoken';
-import { NextResponse } from 'next/server';
 
 const JWT_SECRET = process.env.SECRET_KEY || 'your-secret-key';
 
@@ -13,10 +13,7 @@ export async function POST(request: Request) {
     const { email, password } = await request.json();
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email y contraseña son requeridos' },
-        { status: 400 },
-      );
+      return jsonError('Email y contraseña son requeridos', 400);
     }
 
     // Verificar si el usuario existe
@@ -28,18 +25,12 @@ export async function POST(request: Request) {
         error instanceof Error &&
         error.message.includes('no tiene teléfono o código de país')
       ) {
-        return NextResponse.json({ error: error.message }, { status: 400 });
+        return jsonError(error.message, 400);
       }
-      return NextResponse.json(
-        { error: 'Error al obtener usuario' },
-        { status: 500 },
-      );
+      return jsonError('Error al obtener usuario', 500);
     }
     if (!user) {
-      return NextResponse.json(
-        { error: 'Usuario no encontrado' },
-        { status: 404 },
-      );
+      return jsonError('Usuario no encontrado', 404);
     }
 
     // Verificar contraseña
@@ -49,10 +40,7 @@ export async function POST(request: Request) {
       ENCRYPT_ALGORITHM,
     );
     if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Contraseña incorrecta' },
-        { status: 401 },
-      );
+      return jsonError('Contraseña incorrecta', 401);
     }
 
     // Generar token JWT
@@ -65,24 +53,18 @@ export async function POST(request: Request) {
       await saveSession(email, token, expiresAt);
     } catch (error) {
       console.error('Error guardando sesión:', error);
-      return NextResponse.json(
-        { error: 'Error al iniciar sesión (error de servidor)' },
-        { status: 500 },
-      );
+      return jsonError('Error al iniciar sesión (error de servidor)', 500);
     }
 
     // Devolver usuario sin la contraseña
     const userWithoutPassword = { ...user, password: undefined };
 
-    return NextResponse.json({
+    return jsonSuccess({
       token,
       user: userWithoutPassword,
     });
   } catch (error) {
     console.error('Error en login:', error);
-    return NextResponse.json(
-      { error: 'Error al iniciar sesión' },
-      { status: 500 },
-    );
+    return jsonError('Error al iniciar sesión', 500);
   }
 }

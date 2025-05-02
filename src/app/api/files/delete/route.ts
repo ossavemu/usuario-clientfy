@@ -1,5 +1,5 @@
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { deleteFile } from '@/lib/s3/training/delete';
-import { NextResponse } from 'next/server';
 
 export async function DELETE(request: Request) {
   try {
@@ -9,19 +9,15 @@ export async function DELETE(request: Request) {
     const type = searchParams.get('type') as 'image' | 'training';
 
     if (!phoneNumber || !fileName || !type) {
-      return NextResponse.json(
-        { error: 'Se requieren todos los parámetros' },
-        { status: 400 },
-      );
+      return jsonError('Se requieren todos los parámetros', 400);
     }
 
     await deleteFile(phoneNumber, fileName, type);
-    return NextResponse.json({ success: true });
+    return jsonSuccess({ success: true });
   } catch (error) {
     console.error('Error al eliminar archivo:', error);
-    return NextResponse.json(
-      { error: 'Error al eliminar el archivo', details: error },
-      { status: 500 },
-    );
+    return jsonError('Error al eliminar el archivo', 500, {
+      details: error,
+    });
   }
 }

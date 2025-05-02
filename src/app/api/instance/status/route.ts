@@ -1,7 +1,7 @@
+import { getInstanceByPhone } from '@/dal/logged';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { requireParam } from '@/lib/api/requireParam';
 import { DO_CONFIG } from '@/lib/config';
-import { getInstanceByPhone } from '@/lib/turso/instance';
 import type { NextRequest } from 'next/server';
 
 function sanitizePhone(phone: string): string {

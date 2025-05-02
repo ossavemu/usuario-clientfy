@@ -497,6 +497,7 @@ export default function FranchisesPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ password }),
+      credentials: 'include',
     });
     if (res.ok) {
       localStorage.setItem('franchisesAuth', 'true');
@@ -513,7 +514,9 @@ export default function FranchisesPage() {
       setForm((prev) => ({
         ...prev,
         [e.target.name]:
-          e.target.type === 'number' ? Number(e.target.value) : e.target.value,
+          e.target.name === 'contractedInstances'
+            ? Number(e.target.value)
+            : e.target.value,
       }));
     },
     [],
@@ -523,12 +526,15 @@ export default function FranchisesPage() {
     async (signatureData: string) => {
       setSubmitting(true);
       setPdfUrl(null);
+      const payload = { ...form, signatureType, signatureData };
+      console.log('Payload enviado a /api/franchises:', payload);
       const res = await fetch('/api/franchises', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, signatureType, signatureData }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
+      console.log('Respuesta backend /api/franchises:', res.status, data);
       if (data.success) {
         toast.success('Franchise created and contract sent');
         fetchFranchises();
@@ -602,6 +608,12 @@ export default function FranchisesPage() {
         }
         signatureData = signature;
       }
+      console.log(
+        'handleSubmit: signatureType',
+        signatureType,
+        'signatureData',
+        signatureData,
+      );
       await sendFranchise(signatureData);
     },
     [form, signatureType, signature, sigCanvas, sendFranchise],

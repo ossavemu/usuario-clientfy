@@ -1,5 +1,5 @@
+import { validateServicePassword } from '@/dal/unlogged';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
-import { validateServicePassword } from '@/lib/turso/servicePassword';
 
 export async function POST(request: Request) {
   try {
