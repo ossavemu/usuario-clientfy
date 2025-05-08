@@ -245,7 +245,7 @@ export const UserInfoStep = React.memo(function UserInfoStep({
     }
   };
 
-  const handleSuccessModalClose = useCallback(() => {
+  const handleSuccessModalAction = useCallback(() => {
     setShowSuccessModal(false);
     setServicePassword('');
     setUserPassword('');
@@ -280,116 +280,6 @@ export const UserInfoStep = React.memo(function UserInfoStep({
   }, [router]);
 
   const handleHomeClick = useCallback(() => router.push('/'), [router]);
-
-  const homeButton = useMemo(
-    () => (
-      <Button
-        onClick={handleHomeClick}
-        variant="ghost"
-        size="icon"
-        className="text-purple-600 hover:text-purple-700 hover:bg-purple-50 px-2"
-      >
-        <Home className="h-5 w-5" />
-      </Button>
-    ),
-    [handleHomeClick],
-  );
-
-  const passwordValidationBlock = useMemo(
-    () => (
-      <AnimatePresence>
-        {(isUserPasswordFocused || userPassword.length > 0) && (
-          <motion.div
-            initial={{ opacity: 0, y: -5 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -5 }}
-            transition={{ duration: 0.2 }}
-            className="flex justify-center items-center space-x-4 mt-2 pt-2"
-          >
-            <div className="flex items-center space-x-1 text-xs">
-              {passwordValidation.minLength ? (
-                <Check size={16} className="text-green-500" />
-              ) : (
-                <X size={16} className="text-red-500" />
-              )}
-              <span>Mínimo 8 caracteres</span>
-            </div>
-            <div className="flex items-center space-x-1 text-xs">
-              {passwordValidation.hasLetter ? (
-                <Check size={16} className="text-green-500" />
-              ) : (
-                <X size={16} className="text-red-500" />
-              )}
-              <span>Al menos una letra</span>
-            </div>
-            <div className="flex items-center space-x-1 text-xs">
-              {passwordValidation.hasNumber ? (
-                <Check size={16} className="text-green-500" />
-              ) : (
-                <X size={16} className="text-red-500" />
-              )}
-              <span>Al menos un número</span>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    ),
-    [
-      isUserPasswordFocused,
-      userPassword.length,
-      passwordValidation.minLength,
-      passwordValidation.hasLetter,
-      passwordValidation.hasNumber,
-    ],
-  );
-
-  const submitButton = useMemo(
-    () => (
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isLoading || (!isLogin && !passwordValidation.isValid)}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center">
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-            {isLogin ? 'Iniciando sesión...' : 'Registrando...'}
-          </div>
-        ) : isLogin ? (
-          'Iniciar Sesión'
-        ) : (
-          'Registrarse'
-        )}
-      </Button>
-    ),
-    [isLoading, isLogin, passwordValidation.isValid],
-  );
-
-  const errorBlock = useMemo(
-    () => (
-      <AnimatePresence>
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="text-sm text-red-500"
-          >
-            {error}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    ),
-    [error],
-  );
-
-  const handleSuccessModalAction = useCallback(() => {
-    setShowSuccessModal(false);
-    setServicePassword('');
-    setUserPassword('');
-    setIsLogin(true);
-    router.push('/auth?mode=login');
-  }, [router]);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -686,12 +576,7 @@ export const UserInfoStep = React.memo(function UserInfoStep({
 
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={handleSuccessModalClose}
-        title="Registro Exitoso"
-        description="Tu cuenta ha sido creada correctamente. Ahora puedes iniciar sesión."
-        icon={<Check className="h-6 w-6 text-green-600" />}
-        actionText="Iniciar Sesión"
-        onAction={handleSuccessModalAction}
+        onClose={handleSuccessModalAction}
       />
       <div className="flex justify-between items-center">
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
