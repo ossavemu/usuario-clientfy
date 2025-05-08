@@ -5,18 +5,15 @@ import {
   getAllServicePasswords,
 } from '@/dal/admin';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
-import { getCookieStore } from '@/lib/cookie';
 
 // GET: Obtener todas las contraseñas de servicio
 export async function GET() {
-  const cookieStore = await getCookieStore();
-  const passwords = await getAllServicePasswords(cookieStore);
+  const passwords = await getAllServicePasswords();
   return jsonSuccess({ passwords });
 }
 
 // POST: Crear una nueva contraseña de servicio
 export async function POST(request: Request) {
-  const cookieStore = await getCookieStore();
   try {
     const { email } = await request.json();
 
@@ -25,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     // Generar contraseña de servicio
-    const password = await createServicePassword(email, cookieStore);
+    const password = await createServicePassword(email);
 
     return jsonSuccess({
       message: 'Contraseña generada exitosamente',
@@ -43,7 +40,6 @@ export async function POST(request: Request) {
 
 // DELETE: Eliminar una contraseña de servicio con query parameters
 export async function DELETE(request: Request) {
-  const cookieStore = await getCookieStore();
   try {
     const { searchParams } = new URL(request.url);
     const email = searchParams.get('email');
@@ -53,14 +49,14 @@ export async function DELETE(request: Request) {
     }
 
     // Verificar si la contraseña existe
-    const exists = await findServicePasswordByEmail(email, cookieStore);
+    const exists = await findServicePasswordByEmail(email);
 
     if (exists.length === 0) {
       return jsonError('Contraseña no encontrada', 404);
     }
 
     // Eliminar la contraseña
-    await deleteServicePasswordByEmail(email, cookieStore);
+    await deleteServicePasswordByEmail(email);
 
     return jsonSuccess({
       message: 'Contraseña eliminada exitosamente',

@@ -5,7 +5,7 @@ import {
   verifyPasswordResetToken,
 } from '@/dal/unlogged';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
-import { ENCRYPT_ALGORITHM, SALT_ROUNDS } from '@/lib/constants/encrypt';
+import { ARGON2_MEMORY_COST, ENCRYPT_ALGORITHM } from '@/lib/constants/encrypt';
 
 export async function POST(request: Request) {
   try {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
     // Encriptar la nueva contraseña
     const hashedPassword = await Bun.password.hash(newPassword, {
       algorithm: ENCRYPT_ALGORITHM,
-      cost: SALT_ROUNDS,
+      memoryCost: ARGON2_MEMORY_COST,
     });
 
     // Obtener usuario

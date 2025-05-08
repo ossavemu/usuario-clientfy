@@ -1,39 +1,24 @@
-// Aquí se agregarán funciones para franchises y service_password cuando el schema esté listo
-
+'use server';
 import { db } from '@/db';
 import { franchises, service_passwords } from '@/db/schema';
+
 import { randomUUID } from 'crypto';
 import { eq } from 'drizzle-orm';
 
-export type CookieStore = {
-  get: (name: string) => { value: string } | undefined;
-};
+import { isAdmin } from '@/lib/session/admin';
 
-function isAdmin(cookieStore: CookieStore) {
-  const adminAuth = cookieStore.get('adminAuth');
-  if (adminAuth?.value !== process.env.ADMIN_SESSION_TOKEN) {
-    throw new Error('User not valid');
-  }
-}
-
-export async function getAllFranchises(cookieStore: CookieStore) {
-  isAdmin(cookieStore);
+export async function getAllFranchises() {
+  isAdmin();
   return db.select().from(franchises);
 }
 
-export async function findFranchiseById(
-  state_id: string,
-  cookieStore: CookieStore,
-) {
-  isAdmin(cookieStore);
+export async function findFranchiseById(state_id: string) {
+  isAdmin();
   return db.select().from(franchises).where(eq(franchises.state_id, state_id));
 }
 
-export async function findFranchiseByEmail(
-  email: string,
-  cookieStore: CookieStore,
-) {
-  isAdmin(cookieStore);
+export async function findFranchiseByEmail(email: string) {
+  isAdmin();
   return db.select().from(franchises).where(eq(franchises.email, email));
 }
 
@@ -43,16 +28,14 @@ export async function createFranchise({
   stateId,
   email,
   contractedInstances,
-  cookieStore,
 }: {
   name: string;
   personOrCompanyName: string;
   stateId: string;
   email: string;
   contractedInstances: number;
-  cookieStore: CookieStore;
 }) {
-  isAdmin(cookieStore);
+  isAdmin();
   return db.insert(franchises).values({
     name,
     person_or_company_name: personOrCompanyName,
@@ -64,35 +47,26 @@ export async function createFranchise({
   });
 }
 
-export async function deleteFranchiseByEmail(
-  email: string,
-  cookieStore: CookieStore,
-) {
-  isAdmin(cookieStore);
+export async function deleteFranchiseByEmail(email: string) {
+  isAdmin();
   return db.delete(franchises).where(eq(franchises.email, email));
 }
 
-export async function getAllServicePasswords(cookieStore: CookieStore) {
-  isAdmin(cookieStore);
+export async function getAllServicePasswords() {
+  isAdmin();
   return db.select().from(service_passwords);
 }
 
-export async function findServicePasswordByEmail(
-  email: string,
-  cookieStore: CookieStore,
-) {
-  isAdmin(cookieStore);
+export async function findServicePasswordByEmail(email: string) {
+  isAdmin();
   return db
     .select()
     .from(service_passwords)
     .where(eq(service_passwords.email, email));
 }
 
-export async function deleteServicePasswordByEmail(
-  email: string,
-  cookieStore: CookieStore,
-) {
-  isAdmin(cookieStore);
+export async function deleteServicePasswordByEmail(email: string) {
+  isAdmin();
   return db.delete(service_passwords).where(eq(service_passwords.email, email));
 }
 
@@ -100,11 +74,8 @@ function generateRandomPassword(length = 8): string {
   return randomUUID().replace(/-/g, '').slice(0, length);
 }
 
-export async function createServicePassword(
-  email: string,
-  cookieStore: CookieStore,
-): Promise<string> {
-  isAdmin(cookieStore);
+export async function createServicePassword(email: string): Promise<string> {
+  isAdmin();
   const password = generateRandomPassword();
   const exists = await db
     .select()

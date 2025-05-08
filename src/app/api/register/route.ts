@@ -2,12 +2,10 @@
 
 import { saveSession } from '@/dal/logged';
 import { saveUser, validateServicePassword } from '@/dal/unlogged';
-import { ENCRYPT_ALGORITHM, SALT_ROUNDS } from '@/lib/constants/encrypt';
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { ARGON2_MEMORY_COST, ENCRYPT_ALGORITHM } from '@/lib/constants/encrypt';
+import { setUserCookie, signUser } from '@/lib/session/user';
 import { type RegistrationData } from '@/types/registration';
-import jwt from 'jsonwebtoken';
-import { NextResponse } from 'next/server';
-
-const JWT_SECRET = process.env.SECRET_KEY || 'your-secret-key';
 
 export async function POST(request: Request) {
   try {
@@ -23,10 +21,7 @@ export async function POST(request: Request) {
       !data.password?.service ||
       !data.password?.user
     ) {
-      return NextResponse.json(
-        { error: 'Todos los campos son requeridos' },
-        { status: 400 },
-      );
+      return jsonError('Todos los campos son requeridos', 400);
     }
 
     // Validar contraseña personal
@@ -35,9 +30,9 @@ export async function POST(request: Request) {
       !/[a-zA-Z]/.test(data.password.user) ||
       !/\d/.test(data.password.user)
     ) {
-      return NextResponse.json(
-        { error: 'La contraseña personal no cumple con los requisitos' },
-        { status: 400 },
+      return jsonError(
+        'La contraseña personal no cumple con los requisitos',
+        400,
       );
     }
 
@@ -48,10 +43,7 @@ export async function POST(request: Request) {
     );
 
     if (!isValidServicePassword) {
-      return NextResponse.json(
-        { error: 'La contraseña de servicio no es válida' },
-        { status: 401 },
-      );
+      return jsonError('La contraseña de servicio no es válida', 401);
     }
 
     // Buscar si el usuario ya existe
@@ -59,7 +51,7 @@ export async function POST(request: Request) {
       // Guardar usuario con la estructura completa
       const hashedPassword = await Bun.password.hash(data.password.user, {
         algorithm: ENCRYPT_ALGORITHM,
-        cost: SALT_ROUNDS,
+        memoryCost: ARGON2_MEMORY_COST,
       });
 
       // Crear objeto usuario
@@ -81,16 +73,11 @@ export async function POST(request: Request) {
       const saved = await saveUser(userToSave);
 
       if (!saved) {
-        return NextResponse.json(
-          { error: 'Error al guardar el usuario' },
-          { status: 500 },
-        );
+        return jsonError('Error al guardar el usuario', 500);
       }
 
       // Generar token JWT
-      const token = jwt.sign({ email: data.email }, JWT_SECRET, {
-        expiresIn: '24h',
-      });
+      const token = signUser(data.email);
 
       // Guardar sesión
       const expiresAt = new Date();
@@ -103,21 +90,18 @@ export async function POST(request: Request) {
         password: undefined,
       };
 
-      return NextResponse.json({ token, user: userResponse });
+      // Establecer cookie de sesión
+      const response = jsonSuccess({ token, user: userResponse });
+      await setUserCookie(response, token);
+      return response;
     } catch (error) {
       if ((error as Error).message.includes('UNIQUE constraint failed')) {
-        return NextResponse.json(
-          { error: 'El usuario ya existe' },
-          { status: 400 },
-        );
+        return jsonError('El usuario ya existe', 400);
       }
       throw error; // Re-lanzar para ser capturado por el catch externo
     }
   } catch (error) {
     console.error('Error en registro:', error);
-    return NextResponse.json(
-      { error: 'Error al registrar usuario' },
-      { status: 500 },
-    );
+    return jsonError('Error al registrar usuario', 500);
   }
 }

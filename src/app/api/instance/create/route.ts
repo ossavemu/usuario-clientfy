@@ -1,5 +1,5 @@
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
-import { DO_CONFIG } from '@/lib/config';
+import { DO_SSH_PASSWORD } from '@/lib/constants/do';
 import { createDroplet } from '@/lib/do/create';
 import { waitForDropletActive } from '@/lib/do/wait';
 
@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const { numberphone, companyName, address, features } =
       await request.json();
     const cleanPhone = numberphone.replace(/\+/g, '');
-    const password = DO_CONFIG.SSH_PASSWORD;
+    const password = DO_SSH_PASSWORD;
     if (!password) throw new Error('DIGITALOCEAN_SSH_PASSWORD no configurada');
 
     const instanceName = `bot-${cleanPhone}`;

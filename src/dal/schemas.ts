@@ -47,6 +47,14 @@ export const InstanceSchema = z.object({
   updated_at: z.string().optional(),
 });
 
+export const ServicePasswordSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
 export type User = z.infer<typeof UserSchema>;
 export type Session = z.infer<typeof SessionSchema>;
 export type Instance = z.infer<typeof InstanceSchema>;
+export type ServicePassword = z.infer<typeof ServicePasswordSchema>;

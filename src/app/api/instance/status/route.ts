@@ -1,7 +1,7 @@
 import { getInstanceByPhone } from '@/dal/logged';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { requireParam } from '@/lib/api/requireParam';
-import { DO_CONFIG } from '@/lib/config';
+import { DO_TOKEN } from '@/lib/constants/do';
 import type { NextRequest } from 'next/server';
 
 function sanitizePhone(phone: string): string {
@@ -37,8 +37,8 @@ async function checkDropletStatus(dropletName: string): Promise<{
   error?: string;
 }> {
   try {
-    const DO_TOKEN = DO_CONFIG.TOKEN;
-    if (!DO_TOKEN) {
+    const token = DO_TOKEN;
+    if (!token) {
       throw new Error('DO_TOKEN no configurado');
     }
 
@@ -47,7 +47,7 @@ async function checkDropletStatus(dropletName: string): Promise<{
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${DO_TOKEN}`,
+        Authorization: `Bearer ${token}`,
       },
     });
 

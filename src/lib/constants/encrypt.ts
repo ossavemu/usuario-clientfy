@@ -1,4 +1,3 @@
-import { ENCRYPTION_CONFIG } from '@/lib/config';
-
-export const SALT_ROUNDS = ENCRYPTION_CONFIG.SALT_ROUNDS;
-export const ENCRYPT_ALGORITHM = ENCRYPTION_CONFIG.ALGORITHM;
+export const SALT_ROUNDS = 10;
+export const ARGON2_MEMORY_COST = 65536;
+export const ENCRYPT_ALGORITHM = 'argon2id';

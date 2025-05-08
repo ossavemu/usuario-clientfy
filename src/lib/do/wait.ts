@@ -1,10 +1,10 @@
-import { DO_CONFIG } from '@/lib/config';
-import { DO_API_URL } from '@/lib/constants/do';
+import { DO_API_URL, DO_TOKEN } from '@/lib/constants/do';
+
 export async function waitForDropletActive(
   dropletId: number,
   maxAttempts = 30,
 ) {
-  const token = DO_CONFIG.TOKEN;
+  const token = DO_TOKEN;
   if (!token) throw new Error('DO_TOKEN no configurado');
   let attempts = 0;
   while (attempts < maxAttempts) {

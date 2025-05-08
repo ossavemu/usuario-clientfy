@@ -4,9 +4,7 @@ import { saveSession } from '@/dal/logged';
 import { getUser } from '@/dal/unlogged';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
 import { ENCRYPT_ALGORITHM } from '@/lib/constants/encrypt';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.SECRET_KEY || 'your-secret-key';
+import { setUserCookie, signUser } from '@/lib/session/user';
 
 export async function POST(request: Request) {
   try {
@@ -44,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     // Generar token JWT
-    const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: '24h' });
+    const token = signUser(email);
 
     try {
       // Guardar sesión en Turso con expiración
@@ -56,13 +54,14 @@ export async function POST(request: Request) {
       return jsonError('Error al iniciar sesión (error de servidor)', 500);
     }
 
-    // Devolver usuario sin la contraseña
+    // Establecer cookie y devolver usuario sin la contraseña
     const userWithoutPassword = { ...user, password: undefined };
-
-    return jsonSuccess({
+    const response = jsonSuccess({
       token,
       user: userWithoutPassword,
     });
+    await setUserCookie(response, token);
+    return response;
   } catch (error) {
     console.error('Error en login:', error);
     return jsonError('Error al iniciar sesión', 500);

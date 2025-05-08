@@ -260,31 +260,24 @@ export const UserInfoStep = React.memo(function UserInfoStep({
     setServicePassword(e.target.value);
   };
 
-  const servicePasswordField = (
-    <div className="space-y-2">
-      <Label htmlFor="servicePassword" className="flex items-center gap-2">
-        <span>Contraseña del Servicio</span>
-        {tooltipServicePassword}
-      </Label>
-      <div className="relative">
-        <Input
-          id="servicePassword"
-          type={showPassword ? 'text' : 'password'}
-          value={servicePassword}
-          onChange={handleServicePasswordChange}
-          placeholder="Contraseña proporcionada por el servicio"
-          required
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-        >
-          {showPassword ? eyeOffIcon : eyeIcon}
-        </button>
-      </div>
-    </div>
+  const handleTogglePassword = useCallback(() => {
+    setShowPassword(!showPassword);
+  }, [showPassword]);
+
+  const handleUserPasswordChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setUserPassword(e.target.value);
+    },
+    [],
   );
+
+  const handleToggleUserPassword = useCallback(() => {
+    setShowUserPassword(!showUserPassword);
+  }, [showUserPassword]);
+
+  const handleForgotPassword = useCallback(() => {
+    router.push('/forgot-password');
+  }, [router]);
 
   const handleHomeClick = useCallback(() => router.push('/'), [router]);
 
@@ -390,158 +383,328 @@ export const UserInfoStep = React.memo(function UserInfoStep({
     [error],
   );
 
-  const handleUserPasswordChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setUserPassword(e.target.value);
-    },
-    [],
-  );
-  const handleUserPasswordFocus = useCallback(
-    () => setIsUserPasswordFocused(true),
-    [],
-  );
-  const handleUserPasswordBlur = useCallback(
-    () => setIsUserPasswordFocused(false),
-    [],
-  );
+  const handleSuccessModalAction = useCallback(() => {
+    setShowSuccessModal(false);
+    setServicePassword('');
+    setUserPassword('');
+    setIsLogin(true);
+    router.push('/auth?mode=login');
+  }, [router]);
 
   return (
-    <>
-      {showStripeMsg && (
-        <div className="mb-4 p-3 rounded bg-yellow-50 text-yellow-800 text-center text-sm font-medium border border-yellow-200">
-          Es necesario realizar el pago en Stripe antes de registrarse
-        </div>
-      )}
-      <Tabs value={tabValue} className="w-full" onValueChange={handleTabChange}>
-        <TabsList className="grid w-full grid-cols-[1fr_1fr_auto] mb-6">
-          <TabsTrigger value="register">Registro</TabsTrigger>
-          <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-          {homeButton}
-        </TabsList>
-        <TabsContent value="register">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex justify-center mb-6">
-              <StripeButton />
-            </div>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nombre completo</Label>
-                <Input
-                  id="name"
-                  value={data.name}
-                  onChange={handleNameChange}
-                  placeholder="Tu nombre"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="companyName">Nombre de la empresa</Label>
-                <Input
-                  id="companyName"
-                  value={data.companyName}
-                  onChange={handleCompanyNameChange}
-                  placeholder="Nombre de tu empresa"
-                  required
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">
-                Correo electrónico{' '}
-                <span className="text-xs text-gray-500 mt-1">
-                  (preferiblemente de la empresa)
-                </span>
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={data.email}
-                onChange={handleEmailChange}
-                placeholder="correo@ejemplo.com"
-                required
-              />
-            </div>
-            {servicePasswordField}
-            <div className="space-y-2">
-              <Label htmlFor="userPassword">Crear Contraseña Personal</Label>
-              <div className="relative">
-                <Input
-                  id="userPassword"
-                  type={showUserPassword ? 'text' : 'password'}
-                  value={userPassword}
-                  onChange={handleUserPasswordChange}
-                  onFocus={handleUserPasswordFocus}
-                  onBlur={handleUserPasswordBlur}
-                  placeholder="Crea una contraseña segura"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowUserPassword(!showUserPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showUserPassword ? eyeOffIcon : eyeIcon}
-                </button>
-              </div>
-              {passwordValidationBlock}
-            </div>
-            {errorBlock}
-            {submitButton}
-          </form>
-        </TabsContent>
-        <TabsContent value="login">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                value={data.email}
-                onChange={handleEmailChange}
-                placeholder="correo@ejemplo.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="userPassword">Contraseña</Label>
-              <div className="relative">
-                <Input
-                  id="userPassword"
-                  type={showUserPassword ? 'text' : 'password'}
-                  value={userPassword}
-                  onChange={handleUserPasswordChange}
-                  onFocus={handleUserPasswordFocus}
-                  onBlur={handleUserPasswordBlur}
-                  placeholder="Tu contraseña"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowUserPassword(!showUserPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showUserPassword ? eyeOffIcon : eyeIcon}
-                </button>
-              </div>
-            </div>
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => router.push('/forgot-password')}
-                className="text-sm text-purple-600 hover:text-purple-700"
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid gap-4">
+        <Tabs
+          value={tabValue}
+          onValueChange={handleTabChange}
+          className="w-full"
+        >
+          <div className="flex flex-col items-center">
+            <TabsList className="w-full max-w-xs mb-6">
+              <TabsTrigger
+                value="register"
+                className="w-full transition-all duration-300"
               >
-                ¿Olvidaste tu contraseña?
-              </button>
-            </div>
-            {errorBlock}
-            {submitButton}
-          </form>
-        </TabsContent>
-        <SuccessModal
-          isOpen={showSuccessModal}
-          onClose={handleSuccessModalClose}
-        />
-      </Tabs>
-    </>
+                Registro
+              </TabsTrigger>
+              <TabsTrigger
+                value="login"
+                className="w-full transition-all duration-300"
+              >
+                Iniciar Sesión
+              </TabsTrigger>
+            </TabsList>
+          </div>
+
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={tabValue}
+              initial={{ opacity: 0, x: tabValue === 'login' ? 20 : -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: tabValue === 'login' ? -20 : 20 }}
+              transition={{ duration: 0.3, ease: 'easeInOut' }}
+            >
+              <TabsContent value="register" className="space-y-4 mt-0">
+                {showStripeMsg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="bg-purple-50 p-3 rounded-lg mb-4"
+                  >
+                    <p className="text-sm text-purple-800 text-center">
+                      Es necesario realizar el pago antes de registrarse
+                    </p>
+                  </motion.div>
+                )}
+
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="name">Nombre Completo</Label>
+                    <Input
+                      id="name"
+                      placeholder="Juan Pérez"
+                      value={data.name}
+                      onChange={handleNameChange}
+                      autoCapitalize="words"
+                      autoComplete="name"
+                      autoCorrect="off"
+                      type="text"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="companyName">Nombre de Empresa</Label>
+                    <Input
+                      id="companyName"
+                      placeholder="Mi Empresa S.A."
+                      value={data.companyName}
+                      onChange={handleCompanyNameChange}
+                      autoCapitalize="words"
+                      autoComplete="organization"
+                      autoCorrect="off"
+                      type="text"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      placeholder="usuario@ejemplo.com"
+                      value={data.email}
+                      onChange={handleEmailChange}
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      autoCorrect="off"
+                      type="email"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="flex justify-between items-center">
+                      <Label htmlFor="servicePassword">
+                        Contraseña de Servicio
+                      </Label>
+                      <div className="text-xs">{tooltipServicePassword}</div>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="servicePassword"
+                        value={servicePassword}
+                        onChange={handleServicePasswordChange}
+                        autoCapitalize="none"
+                        autoComplete="off"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleTogglePassword}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showPassword ? eyeOffIcon : eyeIcon}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label
+                      htmlFor="userPassword"
+                      className="flex items-center justify-between"
+                    >
+                      <span>Contraseña Personal</span>
+                      {isUserPasswordFocused && userPassword && (
+                        <div className="flex gap-2 items-center text-xs">
+                          <div className="flex items-center gap-1">
+                            {passwordValidation.minLength ? (
+                              <Check className="w-3 h-3 text-green-500" />
+                            ) : (
+                              <X className="w-3 h-3 text-red-500" />
+                            )}
+                            <span
+                              className={
+                                passwordValidation.minLength
+                                  ? 'text-green-600'
+                                  : 'text-red-500'
+                              }
+                            >
+                              8+ caracteres
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {passwordValidation.hasLetter ? (
+                              <Check className="w-3 h-3 text-green-500" />
+                            ) : (
+                              <X className="w-3 h-3 text-red-500" />
+                            )}
+                            <span
+                              className={
+                                passwordValidation.hasLetter
+                                  ? 'text-green-600'
+                                  : 'text-red-500'
+                              }
+                            >
+                              Letras
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {passwordValidation.hasNumber ? (
+                              <Check className="w-3 h-3 text-green-500" />
+                            ) : (
+                              <X className="w-3 h-3 text-red-500" />
+                            )}
+                            <span
+                              className={
+                                passwordValidation.hasNumber
+                                  ? 'text-green-600'
+                                  : 'text-red-500'
+                              }
+                            >
+                              Números
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="userPassword"
+                        value={userPassword}
+                        onChange={handleUserPasswordChange}
+                        onFocus={() => setIsUserPasswordFocused(true)}
+                        onBlur={() => setIsUserPasswordFocused(false)}
+                        autoCapitalize="none"
+                        autoComplete="new-password"
+                        type={showUserPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleToggleUserPassword}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showUserPassword ? eyeOffIcon : eyeIcon}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+              <TabsContent value="login" className="space-y-4 mt-0">
+                <div className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="email-login">Email</Label>
+                    <Input
+                      id="email-login"
+                      placeholder="usuario@ejemplo.com"
+                      value={data.email}
+                      onChange={handleEmailChange}
+                      autoCapitalize="none"
+                      autoComplete="email"
+                      autoCorrect="off"
+                      type="email"
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <div className="flex justify-between">
+                      <Label htmlFor="password-login">Contraseña</Label>
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        className="text-xs text-purple-600 hover:text-purple-700"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Input
+                        id="password-login"
+                        value={userPassword}
+                        onChange={handleUserPasswordChange}
+                        autoCapitalize="none"
+                        autoComplete="current-password"
+                        type={showUserPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleToggleUserPassword}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showUserPassword ? eyeOffIcon : eyeIcon}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </motion.div>
+          </AnimatePresence>
+        </Tabs>
+
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-red-50 p-3 rounded-lg"
+          >
+            <p className="text-sm text-red-800">{error}</p>
+          </motion.div>
+        )}
+
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          transition={{ duration: 0.2 }}
+        >
+          <Button
+            type="submit"
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
+              ></motion.div>
+            ) : isLogin ? (
+              'Iniciar Sesión'
+            ) : (
+              'Registrarse'
+            )}
+          </Button>
+        </motion.div>
+
+        {!isLogin && !showStripeMsg && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mt-4"
+          >
+            <StripeButton />
+          </motion.div>
+        )}
+      </div>
+
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={handleSuccessModalClose}
+        title="Registro Exitoso"
+        description="Tu cuenta ha sido creada correctamente. Ahora puedes iniciar sesión."
+        icon={<Check className="h-6 w-6 text-green-600" />}
+        actionText="Iniciar Sesión"
+        onAction={handleSuccessModalAction}
+      />
+      <div className="flex justify-between items-center">
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <button
+            type="button"
+            onClick={handleHomeClick}
+            className="inline-flex items-center text-sm text-gray-500 hover:text-purple-600"
+          >
+            <Home className="h-4 w-4 mr-1" />
+            Regresar a inicio
+          </button>
+        </motion.div>
+      </div>
+    </form>
   );
 });

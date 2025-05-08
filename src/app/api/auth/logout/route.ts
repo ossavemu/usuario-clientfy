@@ -1,39 +1,29 @@
 import { deleteSession } from '@/dal/logged';
-import jwt from 'jsonwebtoken';
-import { NextResponse } from 'next/server';
-
-const JWT_SECRET = process.env.SECRET_KEY || 'your-secret-key';
+import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { clearUserCookie } from '@/lib/session/user';
 
 export async function POST(request: Request) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Token no proporcionado' },
-        { status: 401 },
-      );
-    }
-
-    const token = authHeader.split(' ')[1];
     const { email } = await request.json();
 
-    try {
-      // Verificar que el token sea válido
-      jwt.verify(token, JWT_SECRET);
+    if (!email) {
+      return jsonError('Email no proporcionado', 400);
+    }
 
-      // Eliminar la sesión de Turso
+    try {
+      // Eliminar la sesión de la base de datos
       await deleteSession(email);
 
-      return NextResponse.json({ message: 'Sesión cerrada exitosamente' });
-    } catch (jwtError) {
-      console.error('Error al verificar token JWT:', jwtError);
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+      // Eliminar la cookie de sesión
+      await clearUserCookie();
+
+      return jsonSuccess({ message: 'Sesión cerrada exitosamente' });
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+      return jsonError('Error al cerrar sesión', 500);
     }
   } catch (error) {
     console.error('Error en logout:', error);
-    return NextResponse.json(
-      { error: 'Error al cerrar sesión' },
-      { status: 500 },
-    );
+    return jsonError('Error al cerrar sesión', 500);
   }
 }

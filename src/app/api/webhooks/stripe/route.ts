@@ -75,9 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         // El usuario aún no se ha registrado, generamos una contraseña de servicio
         try {
           // Generar contraseña de servicio directamente con Turso
-          const password = await createServicePassword(email, {
-            get: () => ({ value: process.env.ADMIN_SESSION_TOKEN || '' }),
-          });
+          const password = await createServicePassword(email);
 
           // Enviar la contraseña por correo electrónico
           await sendServicePasswordEmail(email, password);
