@@ -1,28 +1,6 @@
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { calendlyUserTable } from '@/lib/api/leg-cal';
 import type { NextRequest } from 'next/server';
-
-interface CalendlyUser {
-  botNumber: string;
-  calendlyUrlVirtual?: string;
-  calendlyUrlInPerson?: string;
-  botIP: string;
-}
-
-const calendlyUserTable: CalendlyUser[] = [
-  {
-    botNumber: '573146858510',
-    calendlyUrlVirtual: 'https://calendly.com/osanvem/test',
-    calendlyUrlInPerson: 'https://calendly.com/osanvem/new-meeting',
-    botIP: '45.230.33.109',
-  },
-  {
-    botNumber: '573042370304',
-    calendlyUrlVirtual:
-      'https://calendly.com/jmgorange/franquicias-cleanwork-orange',
-    calendlyUrlInPerson: undefined,
-    botIP: '137.184.40.121',
-  },
-];
 
 export async function GET(request: NextRequest) {
   try {

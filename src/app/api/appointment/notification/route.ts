@@ -1,5 +1,5 @@
-import { calendlyUserTable } from '@/app/api/appointment/route';
 import { jsonError, jsonSuccess } from '@/lib/api/jsonResponse';
+import { calendlyUserTable } from '@/lib/api/leg-cal';
 import type { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {

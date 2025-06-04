@@ -21,27 +21,18 @@ function readUrlDatabase() {
 
 export async function GET(
   request: NextRequest,
-  context: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
-    // Obtener el slug de forma segura
-    const params = await context.params;
-    const slug = params.slug;
-
+    const resolvedParams = await params; // Added this line
+    const slug = resolvedParams.slug; // Changed this line
     if (!slug) {
       return NextResponse.redirect(new URL('/', request.url));
     }
-
-    // Leer la base de datos
     const urlDatabase = readUrlDatabase();
-
-    // Verificar si el slug existe
     if (!urlDatabase[slug]) {
-      // Redireccionar a página principal si no existe
       return NextResponse.redirect(new URL('/', request.url));
     }
-
-    // Redireccionar a la URL original
     return NextResponse.redirect(new URL(urlDatabase[slug]));
   } catch (error) {
     console.error('Error al redireccionar:', error);
