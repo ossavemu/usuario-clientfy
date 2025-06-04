@@ -68,7 +68,7 @@ export default function RootLayout({
             <div className="flex-none h-16">
               <AuthProvider />
             </div>
-            <div className="flex-1 overflow-hidden">{children}</div>
+            <div className="flex-1 overflow-y-auto">{children}</div>
           </div>
         </TooltipProvider>
         <Toaster richColors position="top-right" />
