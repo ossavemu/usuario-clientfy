@@ -8,7 +8,7 @@ interface CalendlyUser {
   botIP: string;
 }
 
-export const calendlyUserTable: CalendlyUser[] = [
+const calendlyUserTable: CalendlyUser[] = [
   {
     botNumber: '573146858510',
     calendlyUrlVirtual: 'https://calendly.com/osanvem/test',
