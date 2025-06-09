@@ -12,7 +12,7 @@ export const calendlyUserTable: CalendlyUser[] = [
     botIP: '45.230.33.109',
   },
   {
-    botNumber: '529987051356',
+    botNumber: '5219987051356',
     calendlyUrlVirtual:
       'https://calendly.com/jmgorange/franquicias-cleanwork-orange',
     calendlyUrlInPerson: undefined,
