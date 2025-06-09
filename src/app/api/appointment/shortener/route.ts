@@ -43,8 +43,10 @@ function saveUrlDatabase(data: Record<string, string>) {
 // POST - Crear un nuevo enlace acortado
 export async function POST(request: NextRequest) {
   try {
-    const { longUrl, slug } = await request.json();
-    if (!longUrl) return jsonError('URL larga es requerida', 400);
+    const { url, slug } = await request.json();
+    console.log('url', url);
+    console.log('slug', slug);
+    if (!url) return jsonError('URL larga es requerida', 400);
     if (!slug) return jsonError('Slug es requerido', 400);
 
     // Leer la base de datos actual
@@ -56,14 +58,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Guardar el nuevo enlace acortado
-    urlDatabase[slug] = longUrl;
+    urlDatabase[slug] = url;
     saveUrlDatabase(urlDatabase);
 
     // Construir la URL acortada
-    const shortUrl = `${request.nextUrl.origin}/s/${slug}`;
+    const host = 'https://usuario.clientfy.com.mx';
+    const shortUrl = `${host}/s/${slug}`;
 
     return jsonSuccess({
-      longUrl,
+      longUrl: url,
       shortUrl,
       slug,
     });
