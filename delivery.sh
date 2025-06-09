@@ -23,27 +23,28 @@ echo "🏗️  Ejecutando build local con Bun..."
 bun install
 bun run build
 
-# 3) Limpiar y transferir `.next` con tar (más eficiente que rsync para carpetas grandes)
+# 3) Limpiar y transferir `.next` con tar (ignorando xattrs de macOS)
 echo "🗑️  Limpiando .next en el servidor..."
 ssh -i "$KEY_PATH" "$IP" "rm -rf $REMOTE_DIR/.next && mkdir -p $REMOTE_DIR/.next"
 
-echo "📦 Enviando contenido de .next sin xattrs..."
-COPYFILE_DISABLE=1 tar --disable-copyfile -czf - -C .next . \
-  | ssh -i "$KEY_PATH" "$IP" \
-      "tar --no-xattrs -xzf - -C $REMOTE_DIR/.next"
+echo "📦 Enviando contenido de .next (ignorando metadatos macOS)..."
+# Solución robusta para ignorar xattrs
+tar --exclude='._*' \
+    --exclude='.DS_Store' \
+    --disable-copyfile \
+    -czf - -C .next . \
+  | ssh -i "$KEY_PATH" "$IP" "tar -xzf - -C $REMOTE_DIR/.next"
 
-# 4) Transferir archivos adicionales con rsync
-echo "🔁 Sincronizando archivos auxiliares..."
-rsync -az --delete \
-  public \
-  package.json \
-  bun.lockb \
-  .env.production \
-  start.sh \
-  -e "ssh -i $KEY_PATH" \
-  $IP:$REMOTE_DIR
+# 4) Transferir start.prod.sh solo si existe localmente
+if [ -f start.prod.sh ]; then
+  echo "⬆️  Enviando start.prod.sh..."
+  scp -i "$KEY_PATH" start.prod.sh $IP:$REMOTE_DIR/
+  ssh -i "$KEY_PATH" "$IP" "chmod +x $REMOTE_DIR/start.prod.sh"
+else
+  echo "⚠️  Advertencia: start.prod.sh no encontrado localmente"
+fi
 
-# 5) Verificación rápida del contenido en .next
+# 5) Verificación del contenido en .next
 echo "🔍 Verificando .next en el servidor..."
 VERIFY=$(ssh -i "$KEY_PATH" "$IP" \
   "[ -d $REMOTE_DIR/.next ] && [ \"\$(ls -A $REMOTE_DIR/.next)\" ] && echo OK || echo FAIL"
@@ -61,11 +62,12 @@ ssh -i "$KEY_PATH" "$IP" "
   cd $REMOTE_DIR
   if [ -f app.pid ]; then
     echo '🛑 Deteniendo instancia anterior...'
-    kill \$(cat app.pid) || true
-    rm app.pid
+    kill \$(cat app.pid) 2>/dev/null || true
+    rm -f app.pid
   fi
-  chmod +x ./start.prod.sh
-  ./start.prod.sh
+  nohup ./start.prod.sh > ./logs.out 2>&1 &
+  echo \$! > app.pid
+  echo \"✅ Aplicación reiniciada con PID: \$(cat app.pid)\"
 "
 
 echo "🎉 Despliegue completo y exitoso en $IP"
